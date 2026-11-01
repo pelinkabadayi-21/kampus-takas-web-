@@ -1,0 +1,28 @@
+# --- Gizli ayarlar (şifre, API anahtarı) ---
+backend/config/config.php
+.env
+*.env
+
+# --- Kullanıcı yüklemeleri ---
+backend/public/uploads/*
+!backend/public/uploads/.gitkeep
+
+# --- Bağımlılıklar ---
+vendor/
+node_modules/
+
+# --- Log ve geçici dosyalar ---
+*.log
+*.tmp
+*.cache
+
+# --- Veritabanı yedekleri ---
+*.sql.bak
+*.dump
+
+# --- IDE / işletim sistemi ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
