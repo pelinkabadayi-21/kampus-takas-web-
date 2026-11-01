@@ -13,14 +13,14 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 | Proje iskeleti, mimari, veri modeli | ✅ Hafta 3 |
 | Veritabanı, migration, örnek veri, CRUD veri erişim katmanı | ✅ Hafta 4 |
 | Kayıt / giriş, parola hash, oturum, rol tabanlı erişim (öğrenci/yönetici) | ✅ Hafta 5 |
-| İlan oluşturma | 🟡 API hazır (Hafta 4), form ⏳ |
-| Kategori / arama | 🟡 Listeleme, filtre, sıralama hazır (Hafta 4) |
+| İlan oluşturma (form, fotoğraf yükleme, düzenleme, yayından kaldırma) | ✅ Hafta 6 |
+| Kategori / arama / filtre | ✅ Hafta 4 + 6 |
 | Mesajlaşma | ⏳ |
 | Takas teklifi | ⏳ |
 | Değerlendirme | ⏳ |
 | Bildirim | ⏳ |
 | Yapay zekâ kategori/fiyat önerisi | ⏳ |
-| Öğrenci doğrulama · Bağış modu · Konum bazlı buluşma | 🟡 Okul e-postasıyla otomatik doğrulama + yönetici onayı (Hafta 5) |
+| Öğrenci doğrulama · Bağış modu · Konum bazlı buluşma | 🟡 Doğrulama (Hafta 5), bağış ilanı ve önerilen buluşma noktaları (Hafta 6) |
 
 ## Teknolojiler
 - **Backend:** PHP 8 (katmanlı mimari, PDO), REST/JSON API
@@ -51,6 +51,7 @@ Ayrıntı: [docs/mimari.md](docs/mimari.md) · Veri modeli: [docs/er-diyagrami.m
    php backend/database/migrate.php --fresh --seed
    php backend/tests/crud_test.php
    php backend/tests/auth_test.php
+   php backend/tests/listing_test.php
    ```
    (Alternatif: phpMyAdmin → İçe aktar → `backend/database/schema.sql`. Bu yolla sadece tablolar ve kategoriler gelir.)
 5. Test:
@@ -77,11 +78,16 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | POST | `/api/auth/logout` | 🔑 | Çıkış yap (token sunucudan silinir) |
 | GET | `/api/auth/me` | 🔑 | Giriş yapmış kullanıcı |
 | GET | `/api/categories` | 🔓 | Kategori listesi (aktif ilan sayısıyla) |
-| GET | `/api/listings` | 🔓 | İlan listesi. Filtreler: `q`, `category_id`, `listing_type`, `min_price`, `max_price`, `sort` (yeni/ucuz/pahali), `limit`, `offset` |
-| GET | `/api/listings/{id}` | 🔓 | İlan detayı (kategori, sahip, fotoğraflar) |
+| GET | `/api/listings` | 🔓 | İlan listesi (sadece yayındakiler). Filtreler: `q`, `category_id`, `listing_type`, `item_condition`, `min_price`, `max_price`, `sort` (yeni/ucuz/pahali), `limit`, `offset` |
+| GET | `/api/listings/options` | 🔓 | Form seçenekleri (durumlar, buluşma noktaları, limitler) |
+| GET | `/api/listings/{id}` | 🔓 | İlan detayı (kategori, sahip, fotoğraflar); kaldırılmış ilanı sadece sahibi/yönetici görür |
+| GET | `/api/me/listings` | 🔑 | Kendi ilanlarım (tüm durumlar) |
 | POST | `/api/listings` | 🔑 | İlan oluştur (sahibi oturumdan alınır) |
 | PUT | `/api/listings/{id}` | 🔑 sahibi / 🛡️ | İlan güncelle (JSON, kısmi) |
-| DELETE | `/api/listings/{id}` | 🔑 sahibi / 🛡️ | İlan sil |
+| DELETE | `/api/listings/{id}` | 🔑 sahibi / 🛡️ | İlan sil (fotoğraf dosyaları da silinir) |
+| POST | `/api/listings/{id}/images` | 🔑 sahibi / 🛡️ | Fotoğraf yükle (`multipart/form-data`, alan: `image`; JPG/PNG/WEBP, ≤ 5 MB, ≤ 5 adet) |
+| DELETE | `/api/listings/{id}/images/{imageId}` | 🔑 sahibi / 🛡️ | Fotoğraf sil |
+| PUT | `/api/listings/{id}/images/{imageId}/cover` | 🔑 sahibi / 🛡️ | Kapak fotoğrafı yap |
 | GET | `/api/admin/users` | 🛡️ | Kullanıcı listesi |
 | PUT | `/api/admin/users/{id}/role` | 🛡️ | Rol değiştir (`ogrenci` / `yonetici`) |
 | PUT | `/api/admin/users/{id}/verify` | 🛡️ | Öğrenci doğrulamasını aç/kapat |
@@ -97,3 +103,4 @@ Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile b
 | 3 | Kurulum, Mimari ve Veri Modeli | [hafta-03.md](docs/hafta-03.md) | Katmanlı iskelet, `/api/health`, `/api/categories` | Ana sayfa, sistem durumu |
 | 4 | Veritabanı Tasarımı ve Veri Erişim Katmanı | [hafta-04.md](docs/hafta-04.md) | 10 migration, indeksler, sentetik veri, 8 repository (CRUD), servisler, transaction, ilan CRUD API, CRUD testi | İlan listesi (arama, filtre, sıralama), ilan detayı, ana sayfada son ilanlar |
 | 5 | Kullanıcı Yönetimi ve Kimlik Doğrulama | [hafta-05.md](docs/hafta-05.md) · [güvenlik notu](docs/guvenlik-notu.md) | Kayıt/giriş/çıkış API, bcrypt, token (SHA-256 + HttpOnly çerez), hesap kilidi, rol ve sahiplik kontrolü, yönetim API, auth testi | Giriş, kayıt, hesabım (korumalı), yönetim paneli, giriş durumuna göre menü |
+| 6 | Çekirdek Modül A: İlan Oluşturma ve Katalog | [hafta-06.md](docs/hafta-06.md) | 7 iş kuralı (ilan limiti, durum geçişleri, mükerrer ilan…), fotoğraf yükleme (içerik kontrolü, EXIF/GPS silme, küçültme), kapak seçme, kendi ilanlarım, ürün durumu filtresi, ilan testi | İlan ver / düzenle formu, fotoğraf önizleme, galeri, sahibine düzenle/kaldır/sil, ilanlarım (durumlarla) |
