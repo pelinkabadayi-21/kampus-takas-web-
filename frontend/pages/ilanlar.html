@@ -11,6 +11,36 @@
     <a href="../index.html" class="logo">📚 Kampüs Takas</a>
     <nav><a href="../index.html">Ana Sayfa</a><a href="ilanlar.html">İlanlar</a><a href="giris.html">Giriş</a></nav>
   </header>
-  <main class="container"><div class="card" style="margin-top:32px"><h2>İlanlar</h2><p>Bu sayfa ileriki haftalarda geliştirilecek.</p></div></main>
+
+  <main class="container">
+    <h1 class="page-title">İlanlar</h1>
+
+    <form id="filters" class="card filters">
+      <input type="search" name="q" placeholder="Kitap, eşya ara…">
+      <select name="category_id"><option value="">Tüm kategoriler</option></select>
+      <select name="listing_type">
+        <option value="">Tüm türler</option>
+        <option value="satis">Satılık</option>
+        <option value="takas">Takas</option>
+        <option value="bagis">Bağış</option>
+      </select>
+      <input type="number" name="min_price" placeholder="Min ₺" min="0">
+      <input type="number" name="max_price" placeholder="Max ₺" min="0">
+      <select name="sort">
+        <option value="yeni">En yeni</option>
+        <option value="ucuz">En ucuz</option>
+        <option value="pahali">En pahalı</option>
+      </select>
+      <button class="btn" type="submit">Ara</button>
+    </form>
+
+    <p id="result-info" class="muted"></p>
+    <div id="grid" class="listing-grid"></div>
+    <div style="text-align:center;margin-top:20px"><button id="more" class="btn btn-outline" hidden>Daha fazla göster</button></div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ilanlar.js"></script>
 </body>
 </html>
