@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teklifler – Kampüs Takas</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a href="../index.html" class="logo">📚 Kampüs Takas</a>
+    <nav id="main-nav"><a href="../index.html">Ana Sayfa</a><a href="ilanlar.html">İlanlar</a></nav>
+  </header>
+
+  <main class="container medium">
+    <h1 class="page-title">🔄 Takas Teklifleri</h1>
+    <div id="notice"></div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="gelen" role="tab">📥 Gelen <span id="count-gelen" class="tab-count"></span></button>
+      <button class="tab" data-tab="giden" role="tab">📤 Gönderdiğim <span id="count-giden" class="tab-count"></span></button>
+    </div>
+    <div id="offers" class="card"><p class="muted">Yükleniyor…</p></div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/offers.js"></script>
+  <script src="../js/teklifler.js"></script>
+</body>
+</html>

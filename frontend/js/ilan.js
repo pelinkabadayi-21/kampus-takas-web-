@@ -68,9 +68,92 @@ document.addEventListener('DOMContentLoaded', async () => {
       try { await apiDelete('/listings/' + l.id); location.href = 'hesabim.html'; }
       catch (e) { notice.innerHTML = `<p class="error-box">${esc(e.message)}</p>`; }
     });
+  } else if (!me) {
+    actions.innerHTML = `<a class="btn" href="giris.html?next=${encodeURIComponent(location.pathname + location.search)}">Mesaj ve teklif için giriş yapın</a>`;
   } else {
     actions.innerHTML = `
-      <button class="btn" disabled title="Hafta 7'de">💬 Mesaj gönder</button>
-      <button class="btn btn-outline" disabled title="Hafta 7'de">🔄 Takas teklif et</button>`;
+      <a class="btn" href="mesajlar.html?ilan=${l.id}&kisi=${l.user_id}">💬 Mesaj gönder</a>
+      ${l.status === 'aktif' ? `<button class="btn btn-outline" id="offer-open">${l.listing_type === 'bagis' ? '🎁 Talep et' : l.listing_type === 'satis' ? '💰 Fiyat teklif et' : '🔄 Takas teklif et'}</button>` : ''}`;
+    document.getElementById('offer-open')?.addEventListener('click', () => openOfferForm(l));
   }
+
+  // Teklifler: ilan sahibi gelen tüm teklifleri, diğerleri kendi tekliflerini görür
+  if (me) loadOffers(l, me);
 });
+
+async function loadOffers(l, me) {
+  const box = document.getElementById('offers-box');
+  try {
+    const { data } = await apiGet(`/listings/${l.id}/offers`);
+    if (!data.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = `<h2>${l.can_edit ? `Gelen teklifler (${data.length})` : 'Bu ilana verdiğiniz teklifler'}</h2>`
+      + data.map(o => offerCard(o, me, { showListing: false })).join('');
+    if (!box.dataset.bound) {
+      box.dataset.bound = 1;
+      bindOfferActions(box, () => location.reload(),
+        err => document.getElementById('notice').innerHTML = `<p class="error-box">${esc(err.message)}</p>`);
+    }
+    // Bekleyen teklifi varsa tekrar teklif butonunu gizle (iş kuralı T2'nin arayüz tarafı)
+    if (!l.can_edit && data.some(o => o.stage === 'beklemede')) document.getElementById('offer-open')?.remove();
+  } catch (e) { box.hidden = true; }
+}
+
+async function openOfferForm(l) {
+  const panel = document.getElementById('offer-form');
+  const type = l.listing_type;
+  let mine = [];
+  if (type === 'takas') {
+    try { mine = (await apiGet('/me/listings')).items.filter(i => i.status === 'aktif'); } catch (e) {}
+  }
+  panel.hidden = false;
+  panel.innerHTML = `
+    <form id="offer" novalidate>
+      <h2>${type === 'bagis' ? '🎁 Bağış talebi' : type === 'satis' ? '💰 Fiyat teklifi' : '🔄 Takas teklifi'}</h2>
+      ${type === 'takas' ? `
+        <div class="field">
+          <label for="offered_listing_id">Karşılığında vereceğiniz ilan</label>
+          <select id="offered_listing_id" name="offered_listing_id">
+            <option value="">— İlan seçmeden sadece para teklif et —</option>
+            ${mine.map(i => `<option value="${i.id}">${esc(i.title)}</option>`).join('')}
+          </select>
+          ${mine.length ? '' : '<small class="muted">Yayında ilanınız yok. <a href="ilan-ver.html">Takas için ilan verin →</a></small>'}
+          <small class="field-error"></small>
+        </div>` : ''}
+      ${type !== 'bagis' ? `
+        <div class="field">
+          <label for="offered_amount">${type === 'satis' ? 'Teklif ettiğiniz tutar (₺)' : 'Üstüne para (₺) <span class="muted">(isteğe bağlı)</span>'}</label>
+          <input type="number" id="offered_amount" name="offered_amount" min="0" step="1" ${type === 'satis' ? `value="${l.price ?? ''}"` : ''}>
+          ${type === 'satis' ? `<small class="muted">İlan fiyatı: ${formatPrice(l)}</small>` : ''}
+          <small class="field-error"></small>
+        </div>` : '<p class="muted">Bağış ilanında ücret yoktur; ilan sahibine talebinizi iletirsiniz. Birden fazla talep varsa ilan sahibi birini seçer.</p>'}
+      <div class="field">
+        <label for="note">Not <span class="muted">(isteğe bağlı)</span></label>
+        <input id="note" name="note" maxlength="255" placeholder="ör. Yarın öğlen kütüphane önünde buluşabiliriz">
+        <small class="field-error"></small>
+      </div>
+      <div class="actions">
+        <button class="btn" type="submit">Teklifi gönder</button>
+        <button class="btn btn-outline" type="button" id="offer-close">Vazgeç</button>
+      </div>
+    </form>`;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('offer-close').addEventListener('click', () => panel.hidden = true);
+  const form = document.getElementById('offer');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    data.listing_id = l.id;
+    form.querySelector('button[type=submit]').disabled = true;
+    try {
+      await apiPost('/offers', data);
+      panel.innerHTML = '<p class="success-box">✔ Teklifiniz gönderildi. İlan sahibi yanıt verince bildirim alacaksınız.</p>';
+      loadOffers(l, await currentUser());
+      document.getElementById('offer-open')?.remove();
+    } catch (err) {
+      showFieldErrors(form, err.errors);
+      if (!Object.keys(err.errors || {}).length) form.insertAdjacentHTML('afterbegin', `<p class="error-box">${esc(err.message)}</p>`);
+      form.querySelector('button[type=submit]').disabled = false;
+    }
+  });
+}

@@ -39,14 +39,32 @@ async function renderNav() {
   ];
   if (u) {
     links.push([`${PAGES}ilan-ver.html`, '＋ İlan Ver']);
+    links.push([`${PAGES}mesajlar.html`, '💬 Mesajlar', 'messages']);
+    links.push([`${PAGES}teklifler.html`, '🔄 Teklifler', 'pending_offers']);
+    links.push([`${PAGES}bildirimler.html`, '🔔', 'notifications', 'Bildirimler']);
     links.push([`${PAGES}hesabim.html`, '👤 ' + u.full_name.split(' ')[0]]);
     if (u.role === 'yonetici') links.push([`${PAGES}yonetim.html`, '🛡️ Yönetim']);
   } else {
     links.push([`${PAGES}giris.html`, 'Giriş'], [`${PAGES}kayit.html`, 'Kayıt Ol']);
   }
-  nav.innerHTML = links.map(([href, text]) => `<a href="${href}">${esc(text)}</a>`).join('')
+  nav.innerHTML = links.map(([href, text, counter, title]) =>
+      `<a href="${href}"${title ? ` title="${title}" aria-label="${title}"` : ''}>${esc(text)}${counter ? `<span class="nav-count" data-count="${counter}" hidden></span>` : ''}</a>`).join('')
     + (u ? '<a href="#" id="logout-link">Çıkış</a>' : '');
   document.getElementById('logout-link')?.addEventListener('click', e => { e.preventDefault(); logout(); });
+  if (u) { refreshCounts(); setInterval(refreshCounts, 30000); }
+}
+
+/** Menüdeki okunmamış mesaj / bekleyen teklif / bildirim sayaçları (30 sn'de bir) */
+async function refreshCounts() {
+  if (document.hidden) return;
+  try {
+    const { data } = await apiGet('/notifications/counts');
+    document.querySelectorAll('.nav-count').forEach(el => {
+      const n = data[el.dataset.count] || 0;
+      el.textContent = n > 99 ? '99+' : n;
+      el.hidden = n === 0;
+    });
+  } catch (e) { /* oturum düşmüş olabilir; sessiz geç */ }
 }
 
 /** Form alanlarının altına sunucudan gelen hata mesajlarını yazar. */

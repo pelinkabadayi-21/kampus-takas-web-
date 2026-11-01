@@ -65,6 +65,19 @@ function formatPrice(item) {
   return Number(item.price).toLocaleString('tr-TR') + ' ₺';
 }
 
+/** "5 dk önce", "dün 14:20" gibi kısa zaman */
+function timeAgo(str) {
+  const d = new Date(String(str).replace(' ', 'T'));
+  const s = (Date.now() - d) / 1000;
+  if (s < 60) return 'şimdi';
+  if (s < 3600) return Math.floor(s / 60) + ' dk önce';
+  if (s < 86400 && d.getDate() === new Date().getDate()) return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  if (s < 172800) return 'dün ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('tr-TR');
+}
+
+const money = n => Number(n).toLocaleString('tr-TR') + ' ₺';
+
 // Kullanıcıdan gelen metni HTML'e güvenle yazmak için (XSS koruması)
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
