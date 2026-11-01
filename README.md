@@ -72,9 +72,9 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 
 ## Haftalık İlerleme
 
-Her haftanın işi ayrı bir commit ve **etiket (tag)** olarak kaydedilir. GitHub'da **Tags** sekmesinden istediğin haftanın halini görebilir, **Compare** ile iki hafta arasındaki farkı inceleyebilirsin.
+Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile başlar. GitHub'da **Commits** sayfasında hangi haftada neyin eklendiğini, commit'e tıklayınca da değişen satırları görebilirsin. Haftanın ayrıntılı açıklaması `docs/hafta-NN.md` raporundadır.
 
-| Hafta | Konu | Rapor | Etiket | Backend | Frontend |
-|---|---|---|---|---|---|
-| 3 | Kurulum, Mimari ve Veri Modeli | [hafta-03.md](docs/hafta-03.md) | `hafta-03` | Katmanlı iskelet, `/api/health`, `/api/categories` | Ana sayfa, sistem durumu |
-| 4 | Veritabanı Tasarımı ve Veri Erişim Katmanı | [hafta-04.md](docs/hafta-04.md) | `hafta-04` | 10 migration, indeksler, sentetik veri, 8 repository (CRUD), servisler, transaction, ilan CRUD API, CRUD testi | İlan listesi (arama, filtre, sıralama), ilan detayı, ana sayfada son ilanlar |
+| Hafta | Konu | Rapor | Backend | Frontend |
+|---|---|---|---|---|
+| 3 | Kurulum, Mimari ve Veri Modeli | [hafta-03.md](docs/hafta-03.md) | Katmanlı iskelet, `/api/health`, `/api/categories` | Ana sayfa, sistem durumu |
+| 4 | Veritabanı Tasarımı ve Veri Erişim Katmanı | [hafta-04.md](docs/hafta-04.md) | 10 migration, indeksler, sentetik veri, 8 repository (CRUD), servisler, transaction, ilan CRUD API, CRUD testi | İlan listesi (arama, filtre, sıralama), ilan detayı, ana sayfada son ilanlar |
