@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kayıt Ol – Kampüs Takas</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a href="../index.html" class="logo">📚 Kampüs Takas</a>
+    <nav id="main-nav"><a href="../index.html">Ana Sayfa</a><a href="ilanlar.html">İlanlar</a></nav>
+  </header>
+
+  <main class="container narrow">
+    <form id="register-form" class="card form-card" novalidate>
+      <h1>Kayıt Ol</h1>
+      <p class="muted">Okul e-postanla (<b>@bingol.edu.tr</b>) kayıt olursan hesabın otomatik olarak <b>doğrulanmış öğrenci</b> olur.</p>
+      <div id="form-msg"></div>
+      <div class="field">
+        <label for="full_name">Ad Soyad</label>
+        <input id="full_name" name="full_name" autocomplete="name" required>
+        <small class="field-error"></small>
+      </div>
+      <div class="field">
+        <label for="email">E-posta</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
+        <small class="field-error"></small>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="student_no">Öğrenci No <span class="muted">(isteğe bağlı)</span></label>
+          <input id="student_no" name="student_no">
+          <small class="field-error"></small>
+        </div>
+        <div class="field">
+          <label for="department">Bölüm <span class="muted">(isteğe bağlı)</span></label>
+          <input id="department" name="department">
+          <small class="field-error"></small>
+        </div>
+      </div>
+      <div class="field">
+        <label for="password">Parola</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" required>
+        <ul id="pw-rules" class="pw-rules"></ul>
+        <small class="field-error"></small>
+      </div>
+      <div class="field">
+        <label for="password_confirm">Parola (tekrar)</label>
+        <input type="password" id="password_confirm" name="password_confirm" autocomplete="new-password" required>
+        <small class="field-error"></small>
+      </div>
+      <button class="btn btn-block" type="submit">Kayıt Ol</button>
+      <p class="muted center">Zaten hesabın var mı? <a href="giris.html">Giriş yap</a></p>
+    </form>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/kayit.js"></script>
+</body>
+</html>

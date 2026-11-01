@@ -9,11 +9,7 @@
 <body>
   <header class="navbar">
     <a href="index.html" class="logo">📚 Kampüs Takas</a>
-    <nav>
-      <a href="index.html">Ana Sayfa</a>
-      <a href="pages/ilanlar.html">İlanlar</a>
-      <a href="pages/giris.html">Giriş</a>
-    </nav>
+    <nav id="main-nav"><a href="index.html">Ana Sayfa</a><a href="pages/ilanlar.html">İlanlar</a></nav>
   </header>
 
   <section class="hero">
@@ -41,6 +37,7 @@
     <div class="card">
       <h2>Planlanan Modüller</h2>
       <div class="modules">
+        <div class="module">🔐 Kayıt / Giriş / Roller<br><small>✅ Hazır (Hafta 5)</small></div>
         <div class="module">📝 İlan Oluşturma<br><small>İleriki haftalar</small></div>
         <div class="module">🔎 Kategori / Arama<br><small>✅ Temel hali hazır (Hafta 4)</small></div>
         <div class="module">💬 Mesajlaşma<br><small>İleriki haftalar</small></div>
@@ -56,6 +53,7 @@
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

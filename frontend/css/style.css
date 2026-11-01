@@ -79,3 +79,30 @@ footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 24
 .facts th { color: var(--muted); font-weight: 500; width: 40%; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 @media (max-width: 720px) { .detail { grid-template-columns: 1fr; } }
+
+/* ---------- Hafta 5: formlar, giriş/kayıt, yönetim ---------- */
+.container.narrow { max-width: 480px; }
+.form-card { margin-top: 36px; }
+.form-card h1 { font-size: 1.5rem; margin-bottom: 6px; color: var(--primary-dark); }
+.field { margin: 14px 0; }
+.field label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 4px; }
+.field input, .field select { width: 100%; padding: 10px 12px; border: 1px solid #d9d4e8; border-radius: 8px; font: inherit; background: #fff; }
+.field input:focus { outline: 2px solid #c9bdf0; border-color: var(--primary); }
+.field input.invalid { border-color: var(--fail); background: #fff8f7; }
+.field-error { color: var(--fail); font-size: .82rem; display: block; min-height: 1em; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .row-2 { grid-template-columns: 1fr; } }
+.btn-block { width: 100%; margin-top: 8px; padding: 12px; }
+.center { text-align: center; margin-top: 14px; }
+.success-box { background: #e3f4ea; color: var(--ok); padding: 10px 14px; border-radius: var(--radius); margin: 8px 0; }
+.error-box { margin: 8px 0; }
+.pw-rules { list-style: none; display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin-top: 6px; }
+.pw-rules li.ok { color: var(--ok); }
+
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.data-table th, .data-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; white-space: nowrap; }
+.data-table th { color: var(--muted); font-weight: 600; }
+.data-table select { padding: 5px 8px; border-radius: 6px; border: 1px solid #d9d4e8; font: inherit; }
+#flash { position: fixed; right: 16px; bottom: 16px; z-index: 10; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.listing-grid > p { grid-column: 1 / -1; }

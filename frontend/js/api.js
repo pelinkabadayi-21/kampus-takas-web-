@@ -1,6 +1,7 @@
 // Backend ile konuşan tek yer. Sayfalar doğrudan fetch yazmaz, bu fonksiyonları kullanır.
 async function api(path, options = {}) {
   const res = await fetch(API_BASE + path, {
+    credentials: 'include',            // oturum çerezini (HttpOnly) isteğe ekle
     headers: { 'Content-Type': 'application/json' },
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined,
@@ -9,6 +10,7 @@ async function api(path, options = {}) {
   if (!res.ok) {
     const err = new Error(data.error || 'İstek başarısız');
     err.errors = data.errors || {};
+    err.status = res.status;
     throw err;
   }
   return data;

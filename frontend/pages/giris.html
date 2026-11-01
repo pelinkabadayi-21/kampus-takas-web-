@@ -9,8 +9,29 @@
 <body>
   <header class="navbar">
     <a href="../index.html" class="logo">📚 Kampüs Takas</a>
-    <nav><a href="../index.html">Ana Sayfa</a><a href="ilanlar.html">İlanlar</a><a href="giris.html">Giriş</a></nav>
+    <nav id="main-nav"><a href="../index.html">Ana Sayfa</a><a href="ilanlar.html">İlanlar</a></nav>
   </header>
-  <main class="container"><div class="card" style="margin-top:32px"><h2>Giriş</h2><p>Bu sayfa ileriki haftalarda geliştirilecek.</p></div></main>
+
+  <main class="container narrow">
+    <form id="login-form" class="card form-card" novalidate>
+      <h1>Giriş Yap</h1>
+      <div id="form-msg"></div>
+      <div class="field">
+        <label for="email">E-posta</label>
+        <input type="email" id="email" name="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Parola</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-block" type="submit">Giriş Yap</button>
+      <p class="muted center">Hesabın yok mu? <a href="kayit.html">Kayıt ol</a></p>
+    </form>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/giris.js"></script>
 </body>
 </html>
