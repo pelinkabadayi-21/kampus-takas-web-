@@ -6,7 +6,8 @@
  * Öğrenci numaraları "TEST" ile başlar. => Gerçek kişisel veri YOK (KVKK uyumlu).
  *
  * Kullanım: php backend/database/seeds/seed.php   (veya migrate.php --seed)
- * Tüm test kullanıcılarının şifresi: Test1234!
+ * Tüm test kullanıcılarının parolası: Test1234!
+ * Yönetici hesabı: yonetici@ogrenci.example.com / Yonetici1234!
  */
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit('Sadece komut satırından çalışır.'); }
 
@@ -22,7 +23,7 @@ $pick = fn(array $a) => $a[mt_rand(0, count($a) - 1)];
 
 // Önceki örnek veriyi temizle (tablolar korunur)
 $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-foreach (['notifications', 'reviews', 'trade_offers', 'messages', 'favorites', 'listing_images', 'listings', 'categories', 'users'] as $t) {
+foreach (['auth_tokens', 'notifications', 'reviews', 'trade_offers', 'messages', 'favorites', 'listing_images', 'listings', 'categories', 'users'] as $t) {
     $pdo->exec("DELETE FROM $t");
     $pdo->exec("ALTER TABLE $t AUTO_INCREMENT = 1");
 }
@@ -51,6 +52,12 @@ $first = ['Deniz', 'Ece', 'Mert', 'Zeynep', 'Kaan', 'Elif', 'Baran', 'Defne', 'E
 $last  = ['Ataş', 'Bulut', 'Çelikkaya', 'Demirtaş', 'Erdem', 'Güneş', 'Işık', 'Kartal', 'Oral', 'Soylu', 'Tuna', 'Yıldırım'];
 $depts = ['Bilgisayar Programcılığı', 'Muhasebe', 'İşletme', 'Hemşirelik', 'Elektrik', 'Tarım Makineleri', 'Turizm'];
 $tr    = ['ç' => 'c', 'ğ' => 'g', 'ı' => 'i', 'ö' => 'o', 'ş' => 's', 'ü' => 'u', 'Ç' => 'c', 'Ğ' => 'g', 'İ' => 'i', 'Ö' => 'o', 'Ş' => 's', 'Ü' => 'u'];
+
+// Yönetici hesabı (rol tabanlı erişimi test etmek için)
+$users->create([
+    'full_name' => 'Kampüs Yönetici', 'email' => 'yonetici@ogrenci.example.com', 'password' => 'Yonetici1234!',
+    'student_no' => 'TEST0000', 'department' => 'Öğrenci İşleri', 'is_verified' => 1, 'role' => 'yonetici',
+]);
 
 $userIds = [];
 foreach ($first as $i => $fn) {
@@ -142,4 +149,5 @@ $notes->create($userIds[0], 'sistem', 'Kampüs Takas\'a hoş geldiniz! Öğrenci
 
 printf("Örnek veri yüklendi: %d kullanıcı, %d kategori, %d ilan, %d takas teklifi, %d değerlendirme.\n",
        count($userIds), count($catIds), count($listingIds), $offerCount, $reviewCount);
-echo "Test girişi: " . $users->findById($userIds[0])['email'] . "  /  Test1234!\n";
+echo "Öğrenci girişi : " . $users->findById($userIds[0])['email'] . "  /  Test1234!\n";
+echo "Yönetici girişi: yonetici@ogrenci.example.com  /  Yonetici1234!\n";

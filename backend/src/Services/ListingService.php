@@ -28,19 +28,30 @@ class ListingService
         return $this->get($id);
     }
 
-    public function update(int $id, array $d): array
+    /** $actor verilirse sadece ilan sahibi veya yönetici güncelleyebilir. */
+    public function update(int $id, array $d, ?array $actor = null): array
     {
         $current = $this->get($id);
+        $this->assertCanModify($current, $actor);
+        unset($d['user_id']);                           // ilanın sahibi değiştirilemez
         $merged  = array_merge($current, $d);           // kısmi güncellemede kuralları tüm ilana uygula
         $clean   = $this->validate($merged, false);
         $this->listings->update($id, array_intersect_key($clean, $d));
         return $this->get($id);
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, ?array $actor = null): void
     {
-        $this->get($id);
+        $this->assertCanModify($this->get($id), $actor);
         $this->listings->delete($id);
+    }
+
+    /** Sahiplik kontrolü: başkasının ilanını sadece yönetici değiştirebilir. */
+    private function assertCanModify(array $listing, ?array $actor): void
+    {
+        if ($actor === null) return;                    // iç kullanım (seed, test)
+        if ((int) $listing['user_id'] === (int) $actor['id'] || Auth::isAdmin($actor)) return;
+        throw new ValidationException('Bu ilanı sadece sahibi veya yönetici değiştirebilir', [], 403);
     }
 
     private function validate(array $d, bool $isNew): array

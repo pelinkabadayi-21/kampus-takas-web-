@@ -1,5 +1,10 @@
 # Var olmayan tüm adresleri index.php'ye yönlendir (Apache / XAMPP)
 RewriteEngine On
+
+# Apache "Authorization" başlığını PHP'ye varsayılan olarak iletmez; Bearer token için gerekli
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
