@@ -50,6 +50,18 @@ $listingController = function () use ($db) {
     return new ListingController(new ListingService($repo, new CategoryRepository($db()), $images), $images);
 };
 $authController  = fn() => new AuthController($authService(), $config['auth']);
+$messageController = fn() => new MessageController(
+    new MessageService(new MessageRepository($db()), new ListingRepository($db()), new TradeOfferRepository($db())),
+    new MessageRepository($db()));
+$offerController = fn() => new OfferController(new TradeOfferService(new TradeOfferRepository($db()), new ListingRepository($db())));
+$notificationController = fn() => new NotificationController(new NotificationRepository($db()),
+    new MessageRepository($db()), new TradeOfferRepository($db()));
+
+// Bildirim kancası: mesaj/teklif olaylarını dinleyip bildirim yazar (DB'ye sadece olay olunca bağlanır)
+$listenersRegistered = false;
+$registerListeners = function () use (&$listenersRegistered, $db) {
+    if (!$listenersRegistered) { NotificationListeners::register(new NotificationRepository($db())); $listenersRegistered = true; }
+};
 $adminController = fn() => new AdminController(new UserRepository($db()));
 
 $router = new Router();
@@ -79,6 +91,26 @@ $router->delete('/api/listings/{id}',  fn(int $id) => $listingController()->dest
 $router->post('/api/listings/{id}/images',                    fn(int $id)           => $listingController()->uploadImage($id));
 $router->delete('/api/listings/{id}/images/{imageId}',        fn(int $id, int $img) => $listingController()->deleteImage($id, $img));
 $router->put('/api/listings/{id}/images/{imageId}/cover',     fn(int $id, int $img) => $listingController()->coverImage($id, $img));
+
+// --- Mesajlaşma ---
+$router->get('/api/messages',                          fn()                => $messageController()->inbox());
+$router->get('/api/messages/{listingId}/{userId}',     fn(int $l, int $u)  => $messageController()->conversation($l, $u));
+$router->post('/api/messages',                         function () use ($registerListeners, $messageController) { $registerListeners(); $messageController()->send(); });
+
+// --- Takas teklifleri ---
+$router->get('/api/offers',                            fn()                => $offerController()->mine());
+$router->get('/api/listings/{id}/offers',              fn(int $id)         => $offerController()->forListing($id));
+$router->post('/api/offers',                           function () use ($registerListeners, $offerController) { $registerListeners(); $offerController()->store(); });
+$router->put('/api/offers/{id}/{action}',              function (int $id, string $action) use ($registerListeners, $offerController) {
+    if (!in_array($action, ['accept', 'reject', 'cancel', 'complete', 'withdraw'], true)) Response::error('Geçersiz işlem', 404);
+    $registerListeners(); $offerController()->action($id, $action);
+});
+
+// --- Bildirimler ---
+$router->get('/api/notifications',                     fn()                => $notificationController()->index());
+$router->get('/api/notifications/counts',              fn()                => $notificationController()->counts());
+$router->put('/api/notifications/read-all',            fn()                => $notificationController()->readAll());
+$router->put('/api/notifications/{id}/read',           fn(int $id)         => $notificationController()->read($id));
 
 // --- Yönetim (sadece "yonetici" rolü) ---
 $router->get('/api/admin/users',              fn()        => $adminController()->users());

@@ -7,7 +7,9 @@ class ListingRepository extends BaseRepository
     // ---------- CREATE ----------
     public function create(array $d): int
     {
-        return $this->insert('listings', array_intersect_key($d, array_flip(array_merge(['user_id'], self::EDITABLE))));
+        $row = array_intersect_key($d, array_flip(array_merge(['user_id'], self::EDITABLE)));
+        $row['created_at'] = date('Y-m-d H:i:s');
+        return $this->insert('listings', $row);
     }
 
     public function addImage(int $listingId, string $url, int $order = 0): int

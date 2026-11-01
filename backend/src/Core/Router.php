@@ -14,7 +14,9 @@ class Router
 
     private function add(string $method, string $path, callable $handler): void
     {
-        $regex = '#^' . preg_replace('#\{(\w+)\}#', '(\d+)', $path) . '$#';
+        // {id} gibi parametreler sayıdır; {action} ise harflerden oluşan bir kelimedir
+        $regex = '#^' . preg_replace_callback('#\{(\w+)\}#',
+            fn($m) => $m[1] === 'action' ? '([a-z]+)' : '(\d+)', $path) . '$#';
         $this->routes[$method][$regex] = $handler;
     }
 
@@ -26,7 +28,7 @@ class Router
 
         foreach ($this->routes[$method] ?? [] as $regex => $handler) {
             if (preg_match($regex, $path, $m)) {
-                $handler(...array_map('intval', array_slice($m, 1)));
+                $handler(...array_map(fn($v) => ctype_digit($v) ? (int) $v : $v, array_slice($m, 1)));
                 return;
             }
         }
