@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İlan Ver – Kampüs Takas</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a href="../index.html" class="logo">📚 Kampüs Takas</a>
+    <nav id="main-nav"><a href="../index.html">Ana Sayfa</a><a href="ilanlar.html">İlanlar</a></nav>
+  </header>
+
+  <main class="container medium">
+    <form id="listing-form" class="card form-card" novalidate>
+      <h1 id="form-title">Yeni İlan</h1>
+      <div id="form-msg"></div>
+
+      <div class="field">
+        <label>İlan türü</label>
+        <div class="type-picker">
+          <label><input type="radio" name="listing_type" value="satis" checked><span>💰 Satılık<small>Belirli bir fiyata</small></span></label>
+          <label><input type="radio" name="listing_type" value="takas"><span>🔄 Takas<small>Başka bir eşyayla</small></span></label>
+          <label><input type="radio" name="listing_type" value="bagis"><span>🎁 Bağış<small>Ücretsiz</small></span></label>
+        </div>
+        <small class="field-error"></small>
+      </div>
+
+      <div class="field">
+        <label for="title">Başlık</label>
+        <input id="title" name="title" maxlength="120" placeholder="ör. Veritabanı Yönetim Sistemleri ders kitabı" required>
+        <small class="field-error"></small>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="category_id">Kategori</label>
+          <select id="category_id" name="category_id" required><option value="">Seçin…</option></select>
+          <small class="field-error"></small>
+        </div>
+        <div class="field">
+          <label for="item_condition">Ürün durumu</label>
+          <select id="item_condition" name="item_condition"></select>
+          <small class="field-error"></small>
+        </div>
+      </div>
+
+      <div class="field" id="price-field">
+        <label for="price">Fiyat (₺) <span class="muted" id="price-hint"></span></label>
+        <input type="number" id="price" name="price" min="0" step="1" inputmode="decimal">
+        <small class="field-error"></small>
+      </div>
+
+      <div class="field">
+        <label for="description">Açıklama <span class="muted" id="desc-count">0 / 2000</span></label>
+        <textarea id="description" name="description" rows="5" maxlength="2000" placeholder="Ürünün durumu, baskı yılı, eksik/kusur var mı…"></textarea>
+        <small class="field-error"></small>
+      </div>
+
+      <div class="field">
+        <label for="meeting_point">📍 Buluşma noktası <span class="muted">(kampüste güvenli bir yer)</span></label>
+        <input id="meeting_point" name="meeting_point" list="meeting-points" maxlength="120" placeholder="Listeden seçin ya da yazın">
+        <datalist id="meeting-points"></datalist>
+        <small class="field-error"></small>
+      </div>
+
+      <div class="field" id="status-field" hidden>
+        <label for="status">Yayın durumu</label>
+        <select id="status" name="status">
+          <option value="aktif">Yayında</option>
+          <option value="kaldirildi">Yayından kaldır</option>
+          <option value="tamamlandi">Tamamlandı (satıldı / takas edildi)</option>
+        </select>
+        <small class="field-error"></small>
+      </div>
+
+      <div class="field">
+        <label>Fotoğraflar <span class="muted" id="photo-hint"></span></label>
+        <div id="photos" class="photo-grid"></div>
+        <label class="photo-add" id="photo-add">
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple hidden>
+          ＋ Fotoğraf ekle
+        </label>
+        <small class="muted">İlk fotoğraf kapak olur. Konum (GPS) bilgisi fotoğraftan otomatik silinir.</small>
+        <small class="field-error" id="photo-error"></small>
+      </div>
+
+      <div class="actions">
+        <button class="btn" type="submit" id="submit-btn">İlanı Yayınla</button>
+        <a class="btn btn-outline" href="hesabim.html">Vazgeç</a>
+      </div>
+    </form>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/ilan-ver.js"></script>
+</body>
+</html>

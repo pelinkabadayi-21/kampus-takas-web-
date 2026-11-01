@@ -38,6 +38,7 @@ async function renderNav() {
     [`${PAGES}ilanlar.html`, 'İlanlar'],
   ];
   if (u) {
+    links.push([`${PAGES}ilan-ver.html`, '＋ İlan Ver']);
     links.push([`${PAGES}hesabim.html`, '👤 ' + u.full_name.split(' ')[0]]);
     if (u.role === 'yonetici') links.push([`${PAGES}yonetim.html`, '🛡️ Yönetim']);
   } else {
@@ -68,3 +69,12 @@ function safeNext(fallback) {
 }
 
 document.addEventListener('DOMContentLoaded', renderNav);
+
+// Kullanıcı hatalı alanı düzeltmeye başlayınca o alanın hata mesajını temizle
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (!el.classList?.contains('invalid')) return;
+  el.classList.remove('invalid');
+  const box = el.closest('.field')?.querySelector('.field-error');
+  if (box) box.textContent = '';
+});

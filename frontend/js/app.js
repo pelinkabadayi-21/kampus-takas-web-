@@ -14,15 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const [c, l] = await Promise.all([apiGet('/categories'), apiGet('/listings', { limit: 4 })]);
     catEl.innerHTML = c.data.map(k =>
       `<li><a class="chip" href="pages/ilanlar.html?category_id=${k.id}">${esc(k.name)} · ${k.listing_count}</a></li>`).join('');
-    latestEl.innerHTML = l.items.map(i => `
-      <a class="listing-card" href="pages/ilan.html?id=${i.id}">
-        <div class="cover">📦</div>
-        <div class="body">
-          <span class="badge badge-${i.listing_type}">${TYPE_LABEL[i.listing_type]}</span>
-          <h3>${esc(i.title)}</h3>
-          <div class="price">${formatPrice(i)}</div>
-        </div>
-      </a>`).join('') || '<p class="muted">Henüz ilan yok. migrate.php --seed çalıştırın.</p>';
+    latestEl.innerHTML = l.items.map(i => listingCard(i)).join('') || '<p class="muted">Henüz ilan yok. migrate.php --seed çalıştırın.</p>';
   } catch (e) {
     setStatus(apiEl, false, 'API\'ye ulaşılamadı (XAMPP Apache açık mı?)');
     setStatus(dbEl, false, 'Kontrol edilemedi');

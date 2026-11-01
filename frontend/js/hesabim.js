@@ -14,17 +14,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logout-btn').addEventListener('click', logout);
 
   const grid = document.getElementById('my-listings');
+  const info = document.getElementById('limit-info');
   try {
-    const r = await apiGet('/listings', { user_id: u.id, limit: 50 });
-    grid.innerHTML = r.items.map(i => `
-      <a class="listing-card" href="ilan.html?id=${i.id}">
-        <div class="cover">📦</div>
-        <div class="body">
-          <span class="badge badge-${i.listing_type}">${TYPE_LABEL[i.listing_type]}</span>
-          <h3>${esc(i.title)}</h3>
-          <div class="price">${formatPrice(i)}</div>
-        </div>
-      </a>`).join('') || '<p class="muted">Henüz aktif ilanınız yok. İlan verme özelliği bir sonraki haftada eklenecek.</p>';
+    const [r, o] = await Promise.all([apiGet('/me/listings'), apiGet('/listings/options')]);
+    const active = r.items.filter(i => i.status === 'aktif').length;
+    const limit = u.role === 'yonetici' ? null : (u.is_verified == 1 ? o.data.limits.verified : o.data.limits.unverified);
+    info.innerHTML = limit === null ? '' :
+      `${active} / ${limit} aktif ilan` + (u.is_verified == 1 ? '' : ` · <span title="Okul e-postasıyla kayıt olan ya da yönetici tarafından doğrulanan hesaplar ${o.data.limits.verified} ilana kadar açabilir">Doğrulanınca ${o.data.limits.verified}</span>`);
+    grid.innerHTML = r.items.map(i => listingCard(i, { showStatus: true })).join('')
+      || '<p class="muted">Henüz ilanınız yok. <a href="ilan-ver.html">İlk ilanınızı verin →</a></p>';
   } catch (e) {
     grid.innerHTML = `<p class="error-box">${esc(e.message)}</p>`;
   }

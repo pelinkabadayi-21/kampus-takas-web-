@@ -32,7 +32,7 @@ async function load(append = false) {
 
   try {
     const r = await apiGet('/listings', { ...filters, limit: PAGE_SIZE, offset });
-    const html = r.items.map(card).join('');
+    const html = r.items.map(i => listingCard(i)).join('');
     grid.innerHTML = append ? grid.innerHTML + html : (html || '<p class="muted">Bu filtrelere uygun ilan bulunamadı.</p>');
     info.textContent = `${r.total} ilan bulundu`;
     document.getElementById('more').hidden = offset + PAGE_SIZE >= r.total;
@@ -41,15 +41,3 @@ async function load(append = false) {
   }
 }
 
-function card(i) {
-  return `
-    <a class="listing-card" href="ilan.html?id=${i.id}">
-      <div class="cover">${i.cover_image ? `<img src="${esc(i.cover_image)}" alt="">` : '📦'}</div>
-      <div class="body">
-        <span class="badge badge-${i.listing_type}">${TYPE_LABEL[i.listing_type]}</span>
-        <h3>${esc(i.title)}</h3>
-        <div class="price">${formatPrice(i)}</div>
-        <small class="muted">${esc(i.category_name)} · ${COND_LABEL[i.item_condition]}</small>
-      </div>
-    </a>`;
-}
