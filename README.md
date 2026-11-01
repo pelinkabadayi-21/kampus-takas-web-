@@ -15,10 +15,10 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 | Kayıt / giriş, parola hash, oturum, rol tabanlı erişim (öğrenci/yönetici) | ✅ Hafta 5 |
 | İlan oluşturma (form, fotoğraf yükleme, düzenleme, yayından kaldırma) | ✅ Hafta 6 |
 | Kategori / arama / filtre | ✅ Hafta 4 + 6 |
-| Mesajlaşma | ⏳ |
-| Takas teklifi | ⏳ |
+| Mesajlaşma (gelen kutusu, sohbet, okundu bilgisi, spam/flood koruması) | ✅ Hafta 7 |
+| Takas teklifi (durum makinesi: kabul/red/geri çek/tamamla/vazgeç) | ✅ Hafta 7 |
 | Değerlendirme | ⏳ |
-| Bildirim | ⏳ |
+| Bildirim (olay tabanlı kanca, menü sayaçları) | ✅ Hafta 7 |
 | Yapay zekâ kategori/fiyat önerisi | ⏳ |
 | Öğrenci doğrulama · Bağış modu · Konum bazlı buluşma | 🟡 Doğrulama (Hafta 5), bağış ilanı ve önerilen buluşma noktaları (Hafta 6) |
 
@@ -52,6 +52,7 @@ Ayrıntı: [docs/mimari.md](docs/mimari.md) · Veri modeli: [docs/er-diyagrami.m
    php backend/tests/crud_test.php
    php backend/tests/auth_test.php
    php backend/tests/listing_test.php
+   php backend/tests/offer_message_test.php
    ```
    (Alternatif: phpMyAdmin → İçe aktar → `backend/database/schema.sql`. Bu yolla sadece tablolar ve kategoriler gelir.)
 5. Test:
@@ -91,6 +92,16 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | GET | `/api/admin/users` | 🛡️ | Kullanıcı listesi |
 | PUT | `/api/admin/users/{id}/role` | 🛡️ | Rol değiştir (`ogrenci` / `yonetici`) |
 | PUT | `/api/admin/users/{id}/verify` | 🛡️ | Öğrenci doğrulamasını aç/kapat |
+| GET | `/api/messages` | 🔑 | Gelen kutusu |
+| GET | `/api/messages/{ilanId}/{kisiId}` | 🔑 taraflar | Konuşma (`?after=ID` ile sadece yeni mesajlar) |
+| POST | `/api/messages` | 🔑 | Mesaj gönder `{listing_id, receiver_id?, body}` |
+| GET | `/api/offers` | 🔑 | Gelen ve gönderdiğim teklifler |
+| GET | `/api/listings/{id}/offers` | 🔑 | İlanın teklifleri (sahibi hepsini, diğerleri kendininkini görür) |
+| POST | `/api/offers` | 🔑 | Teklif ver `{listing_id, offered_listing_id?, offered_amount?, note?}` |
+| PUT | `/api/offers/{id}/accept\|reject\|cancel\|complete\|withdraw` | 🔑 ilgili taraf | Teklif durumunu değiştir |
+| GET | `/api/notifications` | 🔑 | Bildirimler |
+| GET | `/api/notifications/counts` | 🔑 | Menü sayaçları |
+| PUT | `/api/notifications/{id}/read`, `/read-all` | 🔑 | Okundu yap |
 
 Güvenlik önlemlerinin özeti: [docs/guvenlik-notu.md](docs/guvenlik-notu.md)
 
@@ -104,3 +115,4 @@ Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile b
 | 4 | Veritabanı Tasarımı ve Veri Erişim Katmanı | [hafta-04.md](docs/hafta-04.md) | 10 migration, indeksler, sentetik veri, 8 repository (CRUD), servisler, transaction, ilan CRUD API, CRUD testi | İlan listesi (arama, filtre, sıralama), ilan detayı, ana sayfada son ilanlar |
 | 5 | Kullanıcı Yönetimi ve Kimlik Doğrulama | [hafta-05.md](docs/hafta-05.md) · [güvenlik notu](docs/guvenlik-notu.md) | Kayıt/giriş/çıkış API, bcrypt, token (SHA-256 + HttpOnly çerez), hesap kilidi, rol ve sahiplik kontrolü, yönetim API, auth testi | Giriş, kayıt, hesabım (korumalı), yönetim paneli, giriş durumuna göre menü |
 | 6 | Çekirdek Modül A: İlan Oluşturma ve Katalog | [hafta-06.md](docs/hafta-06.md) | 7 iş kuralı (ilan limiti, durum geçişleri, mükerrer ilan…), fotoğraf yükleme (içerik kontrolü, EXIF/GPS silme, küçültme), kapak seçme, kendi ilanlarım, ürün durumu filtresi, ilan testi | İlan ver / düzenle formu, fotoğraf önizleme, galeri, sahibine düzenle/kaldır/sil, ilanlarım (durumlarla) |
+| 7 | Çekirdek Modül B: Mesajlaşma ve Takas Teklifi + Entegrasyon | [hafta-07.md](docs/hafta-07.md) | Mesaj kuralları M1–M7, teklif durum makinesi ve kuralları T1–T7, transaction ile kabul (çakışan teklifleri kapatma), olay tabanlı bildirim kancası, mesaj/teklif/bildirim uçları, migration 012, test | Mesajlar (iki panel, canlı yenileme, mobil), teklif formu (ilan türüne göre), gelen teklifler, teklifler sayfası, bildirimler, menü sayaçları |
