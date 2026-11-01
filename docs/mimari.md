@@ -40,7 +40,8 @@ flowchart TB
 kampus-takas-web-/
 ├── backend/
 │   ├── config/          → Ayarlar. config.php gizli (.gitignore), örneği config.example.php
-│   ├── database/        → schema.sql (tablolar + başlangıç verisi)
+│   ├── database/        → migrations/ (numaralı .sql), seeds/ (örnek veri), migrate.php, schema.sql
+│   ├── tests/           → crud_test.php
 │   ├── public/          → Dışarıya açık tek klasör: index.php, .htaccess, uploads/
 │   └── src/
 │       ├── Core/        → Ortak araçlar: Database, Router, Response
