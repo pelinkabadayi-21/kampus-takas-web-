@@ -15,6 +15,48 @@ class ListingRepository extends BaseRepository
         return $this->insert('listing_images', ['listing_id' => $listingId, 'image_url' => $url, 'sort_order' => $order]);
     }
 
+    public function findImage(int $imageId): ?array
+    {
+        return $this->fetchOne('SELECT id, listing_id, image_url, sort_order FROM listing_images WHERE id = ?', [$imageId]);
+    }
+
+    public function imagesOf(int $listingId): array
+    {
+        return $this->fetchAll('SELECT id, image_url, sort_order FROM listing_images WHERE listing_id = ? ORDER BY sort_order, id', [$listingId]);
+    }
+
+    public function nextImageOrder(int $listingId): int
+    {
+        return (int) $this->fetchOne('SELECT COALESCE(MAX(sort_order) + 1, 0) AS n FROM listing_images WHERE listing_id = ?', [$listingId])['n'];
+    }
+
+    public function deleteImage(int $imageId): int
+    {
+        return $this->execute('DELETE FROM listing_images WHERE id = ?', [$imageId]);
+    }
+
+    /** Seçilen fotoğrafı 0. sıraya alır, diğerlerini birer kaydırır. */
+    public function setCoverImage(int $listingId, int $imageId): void
+    {
+        $order = 1;
+        foreach ($this->imagesOf($listingId) as $img) {
+            $this->execute('UPDATE listing_images SET sort_order = ? WHERE id = ?',
+                           [(int) $img['id'] === $imageId ? 0 : $order++, $img['id']]);
+        }
+    }
+
+    public function countActiveByUser(int $userId): int
+    {
+        return (int) $this->fetchOne("SELECT COUNT(*) AS n FROM listings WHERE user_id = ? AND status = 'aktif'", [$userId])['n'];
+    }
+
+    public function activeTitleExists(int $userId, string $title, ?int $exceptId = null): bool
+    {
+        return (bool) $this->fetchOne(
+            "SELECT 1 AS x FROM listings WHERE user_id = ? AND status = 'aktif' AND LOWER(title) = LOWER(?) AND id <> ?",
+            [$userId, $title, $exceptId ?? 0]);
+    }
+
     // ---------- READ ----------
     public function findById(int $id): ?array
     {
@@ -25,15 +67,15 @@ class ListingRepository extends BaseRepository
              JOIN users u      ON u.id = l.user_id
              WHERE l.id = ?', [$id]);
         if ($row) {
-            $row['images'] = $this->fetchAll(
-                'SELECT id, image_url FROM listing_images WHERE listing_id = ? ORDER BY sort_order', [$id]);
+            $row['images'] = $this->imagesOf($id);
         }
         return $row;
     }
 
     /**
      * Filtreli arama. Tüm filtreler isteğe bağlıdır.
-     * $f: q, category_id, listing_type, min_price, max_price, user_id, status, sort, limit, offset
+     * $f: q, category_id, listing_type, item_condition, min_price, max_price, user_id,
+     *     status ('hepsi' = tüm durumlar), sort, limit, offset
      */
     public function search(array $f = []): array
     {
@@ -51,7 +93,8 @@ class ListingRepository extends BaseRepository
         return $this->fetchAll(
             "SELECT l.id, l.title, l.price, l.listing_type, l.item_condition, l.status, l.meeting_point,
                     l.created_at, c.name AS category_name, u.full_name AS owner_name,
-                    (SELECT image_url FROM listing_images i WHERE i.listing_id = l.id ORDER BY sort_order LIMIT 1) AS cover_image
+                    (SELECT image_url FROM listing_images i WHERE i.listing_id = l.id ORDER BY sort_order, id LIMIT 1) AS cover_image,
+                    (SELECT COUNT(*) FROM listing_images i WHERE i.listing_id = l.id) AS image_count
              FROM listings l
              JOIN categories c ON c.id = l.category_id
              JOIN users u      ON u.id = l.user_id
@@ -69,14 +112,16 @@ class ListingRepository extends BaseRepository
     private function buildWhere(array $f): array
     {
         $w = []; $p = [];
-        $w[] = 'l.status = ?';           $p[] = $f['status'] ?? 'aktif';
+        $status = $f['status'] ?? 'aktif';
+        if ($status !== 'hepsi') { $w[] = 'l.status = ?'; $p[] = $status; }
         if (!empty($f['q']))            { $w[] = '(l.title LIKE ? OR l.description LIKE ?)'; $p[] = "%{$f['q']}%"; $p[] = "%{$f['q']}%"; }
         if (!empty($f['category_id']))  { $w[] = 'l.category_id = ?';  $p[] = (int) $f['category_id']; }
         if (!empty($f['listing_type'])) { $w[] = 'l.listing_type = ?'; $p[] = $f['listing_type']; }
+        if (!empty($f['item_condition'])) { $w[] = 'l.item_condition = ?'; $p[] = $f['item_condition']; }
         if (!empty($f['user_id']))      { $w[] = 'l.user_id = ?';      $p[] = (int) $f['user_id']; }
         if (isset($f['min_price']) && $f['min_price'] !== '') { $w[] = 'l.price >= ?'; $p[] = (float) $f['min_price']; }
         if (isset($f['max_price']) && $f['max_price'] !== '') { $w[] = 'l.price <= ?'; $p[] = (float) $f['max_price']; }
-        return ['WHERE ' . implode(' AND ', $w), $p];
+        return [$w ? 'WHERE ' . implode(' AND ', $w) : '', $p];
     }
 
     // ---------- UPDATE ----------

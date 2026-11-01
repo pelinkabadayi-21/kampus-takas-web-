@@ -6,6 +6,7 @@ backend/config/config.php
 # --- Kullanıcı yüklemeleri ---
 backend/public/uploads/*
 !backend/public/uploads/.gitkeep
+!backend/public/uploads/.htaccess
 
 # --- Bağımlılıklar ---
 vendor/

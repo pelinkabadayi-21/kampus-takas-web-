@@ -44,8 +44,11 @@ Auth::setResolver(function () use ($authService, $config) {
     return $token ? $authService()->userFromToken($token) : null;
 });
 
-$listingController = fn() => new ListingController(
-    new ListingService(new ListingRepository($db()), new CategoryRepository($db())));
+$listingController = function () use ($db) {
+    $repo   = new ListingRepository($db());
+    $images = new ImageService($repo, __DIR__ . '/uploads/listings');
+    return new ListingController(new ListingService($repo, new CategoryRepository($db()), $images), $images);
+};
 $authController  = fn() => new AuthController($authService(), $config['auth']);
 $adminController = fn() => new AdminController(new UserRepository($db()));
 
@@ -65,10 +68,17 @@ $router->get('/api/categories', fn() => (new CategoryController(new CategoryServ
 
 // --- İlanlar (okuma herkese açık, yazma giriş gerektirir) ---
 $router->get('/api/listings',          fn()        => $listingController()->index());
+$router->get('/api/listings/options',  fn()        => $listingController()->options());
+$router->get('/api/me/listings',       fn()        => $listingController()->mine());
 $router->get('/api/listings/{id}',     fn(int $id) => $listingController()->show($id));
 $router->post('/api/listings',         fn()        => $listingController()->store());
 $router->put('/api/listings/{id}',     fn(int $id) => $listingController()->update($id));
 $router->delete('/api/listings/{id}',  fn(int $id) => $listingController()->destroy($id));
+
+// --- İlan fotoğrafları (ilan sahibi veya yönetici) ---
+$router->post('/api/listings/{id}/images',                    fn(int $id)           => $listingController()->uploadImage($id));
+$router->delete('/api/listings/{id}/images/{imageId}',        fn(int $id, int $img) => $listingController()->deleteImage($id, $img));
+$router->put('/api/listings/{id}/images/{imageId}/cover',     fn(int $id, int $img) => $listingController()->coverImage($id, $img));
 
 // --- Yönetim (sadece "yonetici" rolü) ---
 $router->get('/api/admin/users',              fn()        => $adminController()->users());
