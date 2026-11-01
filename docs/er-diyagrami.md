@@ -16,6 +16,7 @@ erDiagram
     TRADE_OFFERS ||--o{ REVIEWS : "sonrası"
     USERS ||--o{ REVIEWS : "yazar / alır"
     USERS ||--o{ NOTIFICATIONS : "alır"
+    USERS ||--o{ AUTH_TOKENS : "oturumları"
 
     USERS {
         int id PK
@@ -25,6 +26,15 @@ erDiagram
         varchar student_no UK
         varchar department
         bool is_verified
+        enum role "ogrenci/yonetici"
+        tinyint failed_login_count
+        datetime locked_until
+    }
+    AUTH_TOKENS {
+        int id PK
+        int user_id FK
+        char token_hash UK "SHA-256"
+        datetime expires_at
     }
     CATEGORIES {
         int id PK
