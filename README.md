@@ -53,6 +53,7 @@ Ayrıntı: [docs/mimari.md](docs/mimari.md) · Veri modeli: [docs/er-diyagrami.m
    php backend/tests/auth_test.php
    php backend/tests/listing_test.php
    php backend/tests/offer_message_test.php
+   php backend/tests/ogrenci_test.php
    ```
    (Alternatif: phpMyAdmin → İçe aktar → `backend/database/schema.sql`. Bu yolla sadece tablolar ve kategoriler gelir.)
 5. Test:
@@ -92,6 +93,7 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | GET | `/api/admin/users` | 🛡️ | Kullanıcı listesi |
 | PUT | `/api/admin/users/{id}/role` | 🛡️ | Rol değiştir (`ogrenci` / `yonetici`) |
 | PUT | `/api/admin/users/{id}/verify` | 🛡️ | Öğrenci doğrulamasını aç/kapat |
+| GET | `/api/admin/stats` | 🛡️ | Yönetici istatistikleri (öğrenci bölümü, Hafta 5) |
 | GET | `/api/messages` | 🔑 | Gelen kutusu |
 | GET | `/api/messages/{ilanId}/{kisiId}` | 🔑 taraflar | Konuşma (`?after=ID` ile sadece yeni mesajlar) |
 | POST | `/api/messages` | 🔑 | Mesaj gönder `{listing_id, receiver_id?, body}` |
@@ -104,6 +106,17 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | PUT | `/api/notifications/{id}/read`, `/read-all` | 🔑 | Okundu yap |
 
 Güvenlik önlemlerinin özeti: [docs/guvenlik-notu.md](docs/guvenlik-notu.md)
+
+## Öğrencinin Kendi Geliştirdiği Bölümler
+
+| Hafta | Eklenen | Dosya |
+|---|---|---|
+| 4 | Başlık uzunluğu CHECK kısıtı (`chk_listing_title_len`) | `database/migrations/013_ogrenci_kisitlari.sql` |
+| 5 | Rol kontrollü uç `GET /api/admin/stats` | `AdminController::stats()` |
+| 6 | K8: Başlık tamamen büyük harf olamaz | `ListingService::validate()` |
+| 7 | T8: Satılık ilanda teklif fiyatın yarısından az olamaz | `TradeOfferService::create()` |
+
+Ayrıntılar her haftanın raporunda (`docs/hafta-0N.md`), test: `php backend/tests/ogrenci_test.php`. Haftalık ilerleme raporları ve AI kullanım günlükleri: `docs/raporlar/`.
 
 ## Haftalık İlerleme
 

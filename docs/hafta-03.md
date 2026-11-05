@@ -21,11 +21,9 @@ Geliştirme ortamını kurmak, proje mimarisini ve veri modelini tasarlamak, Git
 ## Yapay zekâ kullanımı
 Yapay zekâ; katmanlı mimari ile MVC alternatiflerini karşılaştırmak ve ER diyagramı için varlık/ilişki önerisi almak amacıyla kullanıldı. Önerilen varlıklar gözden geçirildi; **favoriler** (N-N örneği) ve **bağış modu** (`listing_type`) proje ihtiyacına göre eklendi, son karar öğrenci tarafından verildi.
 
-> ✏️ Öğrenci notu: Aşağıdaki "kendi geliştirdiğim bölümler" kısmını kendi cümlelerinle doldur.
-
 ## Öğrencinin kendi geliştirdiği bölümler
-- Varlıklar ve ilişkiler: …
-- Klasör/katman yapısının gerekçesi: …
+- **Varlıklar ve ilişkiler:** Projenin temel varlıkları öğrenci (`users`), kategori (`categories`), ilan (`listings`), mesaj (`messages`) ve takas teklifidir (`trade_offers`). Bir öğrencinin birden çok ilanı olabilir (1-N), her ilan tek bir kategoriye aittir (1-N). Mesajlar ve teklifler hep bir ilana bağlıdır, çünkü konuşma ve takas her zaman belirli bir eşya üzerinden yapılır. Favoriler için ara tablo (`favorites`) kullandım: bir öğrenci birçok ilanı, bir ilan da birçok öğrenci tarafından favorilenebilir (N-N).
+- **Klasör/katman yapısının gerekçesi:** Backend ve frontend'i ayrı klasörlere koydum, böylece arayüz değişse bile API aynı kalıyor. Backend'de tarayıcıdan erişilen tek klasör `public/`; şifrelerin bulunduğu `config/` dışarıdan okunamıyor. `src/` altında her katmanın kendi klasörü var (Controllers, Services, Repositories), böylece her haftanın modülünü doğru katmana ekleyebiliyorum.
 
 ---
 

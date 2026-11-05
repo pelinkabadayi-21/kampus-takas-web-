@@ -117,11 +117,14 @@ Yapay zekâ; indeks önerisi almak (hangi sorgu için hangi bileşik indeks), mi
 
 ---
 
-> ✏️ **Öğrenci görevi (kendin yapmalısın):** Ders bu hafta "en az bir ilişki ve kısıtı elle yazıp açıklamanı" istiyor. Aşağıya, örneğin `favorites` tablosunu veya `listings` fiyat CHECK'ini kendi cümlelerinle açıkla. İstersen kendi yazdığın yeni bir kısıt da ekle (ör. `reviews.comment` en az 5 karakter).
-
 ## Öğrencinin kendi geliştirdiği bölümler
-- Elle yazdığım ilişki: …
-- Elle yazdığım kısıt ve açıklaması: …
+- **Açıkladığım ilişki — `favorites` (N-N):** `favorites` tablosu öğrenci ile ilanı birbirine bağlıyor. İçinde iki yabancı anahtar var (`user_id → users`, `listing_id → listings`) ve ikisi birlikte birincil anahtar. Bu sayede aynı öğrenci aynı ilanı iki kez favorileyemiyor. Öğrenci ya da ilan silinirse favori kaydı da `ON DELETE CASCADE` ile siliniyor, yani sahipsiz kayıt kalmıyor.
+- **Elle yazdığım kısıt — `013_ogrenci_kisitlari.sql`:**
+  ```sql
+  ALTER TABLE listings ADD CONSTRAINT chk_listing_title_len CHECK (CHAR_LENGTH(title) BETWEEN 3 AND 120);
+  ```
+  Başlık uzunluğu kuralı `ListingService` içinde de var. Ama biri phpMyAdmin'den doğrudan veritabanına yazarsa servis devreye girmez. CHECK kısıtı kuralı veritabanının kendisine koyuyor, böylece veri hangi yoldan gelirse gelsin kural uygulanıyor. `LENGTH` yerine `CHAR_LENGTH` kullandım: `LENGTH` bayt sayar ve Türkçe "ş", "ğ" gibi harfler 2 bayt olduğu için yanlış sonuç verir.
+- **Test:** `php backend/tests/ogrenci_test.php` → 2 karakterlik başlık veritabanı tarafından reddediliyor.
 
 ---
 

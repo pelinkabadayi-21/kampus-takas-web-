@@ -102,15 +102,13 @@ Kurallardaki limitler (3/20 ilan, 5 fotoğraf, 100.000 ₺) projenin ihtiyacına
 
 ---
 
-> ✏️ **Öğrenci görevi (kendin yapmalısın):** Ders, "modülün çekirdek mantığını ve iş kurallarını kendin yazmanı" istiyor. `ListingService.php` dosyasını okuyup K1–K7 kurallarından en az ikisini kendi cümlelerinle açıkla. Ardından kendin yeni bir kural ekle. Örnekler:
-> - "Ders Kitabı kategorisinde açıklama en az 20 karakter olmalı (baskı yılı yazılsın diye)."
-> - "Başlık tamamen büyük harf olamaz."
->
-> Kuralı `validate()` fonksiyonuna eklemen yeterli.
-
 ## Öğrencinin kendi geliştirdiği bölümler
-- Açıkladığım iş kuralları: …
-- Kendi eklediğim kural ve nedeni: …
+- **Açıkladığım iş kuralları:**
+  - *K3 (ilan limiti):* Doğrulanmamış bir öğrenci en fazla 3, doğrulanmış bir öğrenci en fazla 20 aktif ilan açabiliyor. Böylece sahte hesaplarla siteye toplu ilan yığılamıyor ve öğrenciler okul e-postasıyla doğrulamaya teşvik ediliyor.
+  - *K5 (durum geçişleri):* İlan sahibi ilanını yayında, kaldırıldı ya da tamamlandı yapabiliyor; "rezerve" durumunu ise sadece bir takas teklifi kabul edildiğinde sistem veriyor. Böylece kimse ilanını sahte yere "rezerve" gösteremiyor.
+- **Kendi eklediğim kural — K8: Başlık tamamen büyük harfle yazılamaz.**
+  `ListingService::validate()` içinde: başlıkta 6 veya daha fazla harf varsa ve başlık tamamen büyük harfse "Başlık tamamen büyük harfle yazılamaz" hatası veriliyor. **Neden:** "ACİL SATILIK KİTAP!!!" gibi bağıran başlıklar katalogda dikkati haksız şekilde çekiyor ve okunmayı zorlaştırıyor. "USB 64 GB" gibi kısa ve doğal olarak büyük harfli başlıklar etkilenmesin diye 6 harf sınırı koydum. Türkçe harflerin (İ, Ş, Ğ) doğru büyütülmesi için `mb_strtoupper(..., 'UTF-8')` kullanılıyor.
+- **Test:** `php backend/tests/ogrenci_test.php` → "ACİL SATILIK KİTAP" reddedildi, "USB 64 GB" kabul edildi.
 
 ---
 

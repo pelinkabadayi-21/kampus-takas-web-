@@ -63,11 +63,13 @@ Yapay zekâ; güvenli kimlik doğrulama desenlerini (bcrypt, HttpOnly çerez, to
 
 ---
 
-> ✏️ **Öğrenci görevi (kendin yapmalısın):** Ders, "parola hash ve doğrulama akışını kendin kurmanı" ve "rol kontrolünü en az bir uçta kendin uygulamanı" istiyor. `AuthService::register()` ve `login()` fonksiyonlarını satır satır okuyup aşağıya kendi cümlelerinle akışı yaz. Sonra kendin bir rol kontrolü ekle. Örnek: `GET /api/admin/stats` (sadece yönetici; toplam kullanıcı ve ilan sayısı). Bunun için `AdminController`'a bir fonksiyon, `index.php`'ye bir rota yeterli; fonksiyonun ilk satırı `Auth::requireRole('yonetici');` olmalı.
-
 ## Öğrencinin kendi geliştirdiği bölümler
-- Parola hash ve doğrulama akışı (kendi cümlelerimle): …
-- Kendi eklediğim rol kontrollü uç: …
+- **Parola hash ve doğrulama akışı:**
+  1. *Kayıt:* Parola kurallara uyuyor mu diye kontrol ediliyor (en az 8 karakter, harf ve rakam). Uyuyorsa `password_hash()` ile bcrypt özeti alınıyor ve veritabanına parolanın kendisi değil bu özet yazılıyor. bcrypt her parolaya rastgele bir tuz (salt) ekliyor.
+  2. *Giriş:* E-postayla kullanıcı bulunuyor, hesap kilitli mi kontrol ediliyor. Sonra `password_verify()` yazılan parolayı aynı yöntemle özetleyip kayıttaki özetle karşılaştırıyor.
+  3. *Başarısızsa:* "E-posta veya parola hatalı" mesajı dönüyor ve hata sayacı artıyor; 5 hatada hesap 15 dakika kilitleniyor.
+  4. *Başarılıysa:* Rastgele bir token üretiliyor. Veritabanına token'ın SHA-256 özeti yazılıyor, token'ın kendisi ise HttpOnly çerezle tarayıcıya gönderiliyor. Sonraki isteklerde bu token'ın özeti veritabanında aranıyor.
+- **Kendi eklediğim rol kontrollü uç — `GET /api/admin/stats`:** Yönetici paneli için toplam kullanıcı, doğrulanmış kullanıcı, yönetici, yayındaki ilan ve bekleyen teklif sayılarını döndürüyor. Fonksiyonun ilk satırı `Auth::requireRole('yonetici');`. Giriş yapılmadan istek atılırsa **401**, öğrenci hesabıyla atılırsa **403**, yönetici hesabıyla atılırsa **200** dönüyor (üçü de denendi). Dosyalar: `AdminController::stats()`, `UserRepository::stats()`, `index.php` içindeki rota.
 
 ---
 

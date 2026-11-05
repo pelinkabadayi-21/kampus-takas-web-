@@ -155,13 +155,16 @@ M4 (ilan sahibi konuşma başlatamaz) ve T7'deki "aynı kitap iki takasa verilem
 
 ---
 
-> ✏️ **Öğrenci görevi (kendin yapmalısın):** Ders bu hafta da "çekirdek mantığı ve iş kurallarını kendin yazmanı" istiyor. Önce `TradeOfferService::accept()` fonksiyonunu satır satır okuyup transaction içindeki 3 adımı kendi cümlelerinle aşağıya yaz. Sonra kendin bir kural ekle. Örnekler:
-> - **Kolay:** Satılık ilanda teklif edilen tutar, ilan fiyatının yarısından az olamaz. `create()` içindeki `case 'satis':` bloğuna eklenir.
-> - **Orta:** Bir kullanıcının toplam bekleyen teklifi 10'u geçemez. `TradeOfferRepository`'ye bir sayım fonksiyonu yazıp `create()` içinde kontrol et.
-
 ## Öğrencinin kendi geliştirdiği bölümler
-- `accept()` içindeki transaction adımları (kendi cümlelerimle): …
-- Kendi eklediğim kural ve nedeni: …
+- **`accept()` içindeki transaction adımları:** Önce işlem dışında kontroller yapılıyor: işlemi yapan kişi ilan sahibi mi, teklif hâlâ beklemede mi, ilan ve önerilen ilan hâlâ yayında mı. Sonra tek bir transaction içinde:
+  1. Teklifin durumu `kabul` yapılıyor ve yanıt zamanı yazılıyor.
+  2. İstenen ilan ve varsa karşılığında önerilen ilan `rezerve` yapılıyor.
+  3. Bu iki ilanı içeren diğer bütün bekleyen teklifler bulunup kapatılıyor: aynı ilana gelenler `red`, bu ilanları başka bir takasta öneren teklifler `iptal` oluyor.
+
+  Bu adımlardan biri bile hata verirse `rollBack()` ile hepsi geri alınıyor; teklif kabul edilip ilanın rezerve olmadığı gibi yarım bir durum oluşmuyor. İşlem bittikten sonra `offer.accepted` olayı yayılıyor ve teklif verene bildirim gidiyor.
+- **Kendi eklediğim kural — T8: Satılık ilanda teklif, ilan fiyatının yarısından az olamaz.**
+  `TradeOfferService::create()` içinde, satılık ilan için gelen teklif tutarı ilan fiyatının yarısından düşükse "Teklif, ilan fiyatının yarısından (… ₺) az olamaz" hatası veriliyor. **Neden:** 300 ₺'lik bir kitaba 20 ₺ teklif gibi ciddi olmayan teklifler satıcıyı uğraştırıyor ve bildirim kalabalığı yapıyor. Takas ve bağış ilanlarında bu kural yok, çünkü orada fiyat yok ya da zorunlu değil.
+- **Test:** `php backend/tests/ogrenci_test.php` → 200 ₺'lik ilana 90 ₺ teklif reddedildi, 100 ₺ teklif kabul edildi.
 
 ---
 
