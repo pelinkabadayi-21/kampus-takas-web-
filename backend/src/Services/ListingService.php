@@ -11,6 +11,7 @@
  *      "rezerve" sadece takas teklifi kabul edilince sistem tarafından verilir;
  *      tamamlanan ilan tekrar aktif edilemez (yönetici hariç)
  *  K6  Aynı kullanıcının aynı başlıkta iki aktif ilanı olamaz (mükerrer ilan)
+ *  K8  (Öğrenci kuralı) Başlık tamamen büyük harfle yazılamaz
  *  K7  "ai_suggested_price" kullanıcı tarafından yazılamaz; yapay zekâ modülü doldurur
  */
 class ListingService
@@ -178,6 +179,12 @@ class ListingService
         $e = [];
         $d['title'] = trim((string) ($d['title'] ?? ''));
         if (mb_strlen($d['title']) < 3 || mb_strlen($d['title']) > 120) $e['title'] = 'Başlık 3-120 karakter olmalı';
+        // ÖĞRENCİ KURALI (Hafta 6) K8: Başlık tamamen BÜYÜK HARFLE yazılamaz.
+        // Amaç: Bağıran, dikkat çekmeye çalışan başlıkları engelleyip katalogda okunabilirliği korumak.
+        // Not: 6'dan az harf içeren kısa başlıklar (ör. "USB 64 GB") kuraldan etkilenmez; rakamlar harf sayılmaz.
+        elseif (preg_match_all('/\p{L}/u', $d['title']) >= 6 && $d['title'] === mb_strtoupper($d['title'], 'UTF-8')) {
+            $e['title'] = 'Başlık tamamen büyük harfle yazılamaz';
+        }
 
         $d['description'] = trim((string) ($d['description'] ?? '')) ?: null;
         if ($d['description'] && mb_strlen($d['description']) > 2000) $e['description'] = 'Açıklama en fazla 2000 karakter olabilir';

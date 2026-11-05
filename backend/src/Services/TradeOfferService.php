@@ -17,6 +17,7 @@
  *  T4  Karşılığında önerilen ilan teklif verene ait, yayında ve hedef ilandan farklı olmalı
  *  T5  Tutar 0 - 100.000 ₺; not en fazla 255 karakter
  *  T6  Kabul/red sadece ilan sahibi; geri çekme sadece teklif veren; tamamlama/vazgeçme iki taraf
+ *  T8  (Öğrenci kuralı) Satılık ilanda teklif, ilan fiyatının yarısından az olamaz
  *  T7  Kabul TEK İŞLEMDE (transaction): teklif kabul, diğer bekleyen teklifler kapanır,
  *      iki ilan da rezerve olur, rezerve ilanları içeren başka bekleyen teklifler iptal edilir
  */
@@ -62,6 +63,11 @@ class TradeOfferService
             case 'satis':
                 if ($offeredId) $e['offered_listing_id'] = 'Satılık ilana ürün değil, fiyat teklif edilir';
                 if ($amount === null) $e['offered_amount'] = 'Teklif ettiğiniz tutarı yazın';
+                // ÖĞRENCİ KURALI (Hafta 7): Satılık ilana ilan fiyatının yarısından az teklif verilemez.
+                // Amaç: Satıcıyı çok düşük, ciddi olmayan tekliflerle uğraştırmamak.
+                elseif (is_numeric($amount) && $listing['price'] !== null && $amount < $listing['price'] / 2) {
+                    $e['offered_amount'] = 'Teklif, ilan fiyatının yarısından (' . number_format($listing['price'] / 2, 0, ',', '.') . ' ₺) az olamaz';
+                }
                 break;
             case 'takas':
                 if (!$offeredId && $amount === null) $e['offered_listing_id'] = 'Karşılığında bir ilanınızı ve/veya tutar önerin';

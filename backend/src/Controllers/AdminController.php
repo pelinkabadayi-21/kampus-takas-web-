@@ -23,6 +23,14 @@ class AdminController
         Response::json(['success' => true, 'data' => $this->users->findById($id)]);
     }
 
+    // GET /api/admin/stats   ÖĞRENCİ BÖLÜMÜ (Hafta 5): rol kontrolünün uygulandığı uç
+    // Sadece yönetici görebilir; giriş yoksa 401, öğrenciyse 403 döner.
+    public function stats(): void
+    {
+        Auth::requireRole('yonetici');
+        Response::json(['success' => true, 'data' => $this->users->stats()]);
+    }
+
     // PUT /api/admin/users/{id}/verify   {"is_verified": true|false}
     public function setVerified(int $id): void
     {

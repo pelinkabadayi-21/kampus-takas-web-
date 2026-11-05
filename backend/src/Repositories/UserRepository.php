@@ -72,6 +72,19 @@ class UserRepository extends BaseRepository
         $this->execute('UPDATE users SET failed_login_count = 0, locked_until = NULL, last_login_at = ? WHERE id = ?', [$now, $id]);
     }
 
+    /** Yönetici paneli istatistikleri (Hafta 5 öğrenci bölümü) */
+    public function stats(): array
+    {
+        $one = fn(string $sql) => (int) $this->fetchOne($sql)['n'];
+        return [
+            'users'            => $one('SELECT COUNT(*) AS n FROM users'),
+            'verified_users'   => $one('SELECT COUNT(*) AS n FROM users WHERE is_verified = 1'),
+            'admins'           => $one("SELECT COUNT(*) AS n FROM users WHERE role = 'yonetici'"),
+            'active_listings'  => $one("SELECT COUNT(*) AS n FROM listings WHERE status = 'aktif'"),
+            'pending_offers'   => $one("SELECT COUNT(*) AS n FROM trade_offers WHERE status = 'beklemede'"),
+        ];
+    }
+
     public function delete(int $id): int
     {
         return $this->execute('DELETE FROM users WHERE id = ?', [$id]);

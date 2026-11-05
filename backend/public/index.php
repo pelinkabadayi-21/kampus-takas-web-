@@ -116,6 +116,7 @@ $router->put('/api/notifications/{id}/read',           fn(int $id)         => $n
 $router->get('/api/admin/users',              fn()        => $adminController()->users());
 $router->put('/api/admin/users/{id}/role',    fn(int $id) => $adminController()->setRole($id));
 $router->put('/api/admin/users/{id}/verify',  fn(int $id) => $adminController()->setVerified($id));
+$router->get('/api/admin/stats',              fn()        => $adminController()->stats());   // öğrenci bölümü (H5)
 
 // Hataları tek yerden JSON'a çevir
 try {
