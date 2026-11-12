@@ -48,12 +48,12 @@ class MessageRepository extends BaseRepository
                        SUM(CASE WHEN receiver_id = ? AND is_read = 0 THEN 1 ELSE 0 END) AS unread
                 FROM messages
                 WHERE sender_id = ? OR receiver_id = ?
-                GROUP BY listing_id, CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END
+                GROUP BY listing_id, other_id
              ) c
              JOIN messages m ON m.id = c.last_id
              JOIN listings l ON l.id = c.listing_id
              JOIN users u    ON u.id = c.other_id
-             ORDER BY c.last_id DESC', [$userId, $userId, $userId, $userId, $userId]);
+             ORDER BY c.last_id DESC', [$userId, $userId, $userId, $userId]);
     }
 
     public function markRead(int $listingId, int $receiverId, int $senderId): int

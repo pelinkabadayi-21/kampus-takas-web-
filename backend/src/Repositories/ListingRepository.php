@@ -63,7 +63,9 @@ class ListingRepository extends BaseRepository
     public function findById(int $id): ?array
     {
         $row = $this->fetchOne(
-            'SELECT l.*, c.name AS category_name, u.full_name AS owner_name, u.is_verified AS owner_verified
+            'SELECT l.*, c.name AS category_name, u.full_name AS owner_name, u.is_verified AS owner_verified,
+                    (SELECT ROUND(AVG(r.rating), 1) FROM reviews r WHERE r.reviewed_id = l.user_id) AS owner_rating,
+                    (SELECT COUNT(*) FROM reviews r WHERE r.reviewed_id = l.user_id) AS owner_review_count
              FROM listings l
              JOIN categories c ON c.id = l.category_id
              JOIN users u      ON u.id = l.user_id

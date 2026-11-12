@@ -199,11 +199,12 @@ class TradeOfferService
         return array_map([$this, 'decorate'], $this->offers->forListing($listingId, $all ? null : (int) $viewer['id']));
     }
 
-    public function mine(int $userId): array
+    public function mine(int $userId, array $reviewedOfferIds = []): array
     {
+        $flag = function (array $o) use ($reviewedOfferIds) { $o['i_reviewed'] = in_array((int) $o['id'], $reviewedOfferIds, true); return $o; };
         return [
-            'received' => array_map([$this, 'decorate'], $this->offers->received($userId)),
-            'sent'     => array_map([$this, 'decorate'], $this->offers->sent($userId)),
+            'received' => array_map($flag, array_map([$this, 'decorate'], $this->offers->received($userId))),
+            'sent'     => array_map($flag, array_map([$this, 'decorate'], $this->offers->sent($userId))),
             'pending_received' => $this->offers->countPendingReceived($userId),
         ];
     }

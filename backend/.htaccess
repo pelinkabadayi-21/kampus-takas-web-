@@ -1,0 +1,3 @@
+# backend/ altındaki ayar, kaynak kod, veritabanı ve test dosyaları tarayıcıdan açılamaz.
+# Sadece backend/public/ dışarıya açıktır (orada kendi .htaccess dosyası erişime izin verir).
+Require all denied

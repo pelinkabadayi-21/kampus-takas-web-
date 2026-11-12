@@ -53,9 +53,16 @@ try {
         && $lr->findById($hedef['id'])['status'] === 'rezerve' && $lr->findById($bKit['id'])['status'] === 'rezerve');
     $check('Kabul: diğer bekleyen teklif otomatik "red"', $ts->get($o2)['status'] === 'red');
     $check('Bildirim: teklif verene kabul bildirimi', str_contains($notes->forUser($B['id'])[0]['content'], 'kabul'));
+    echo "DEĞERLENDİRME (Hafta 8)\n";
+    $rs = new ReviewService(new ReviewRepository($pdo), $or);
+    $check('R1: Tamamlanmamış takas değerlendirilemez', $throws(fn() => $rs->create($o1, $A['id'], 5, 'erken')));
     $ts->complete($o1, $B);
     $check('Tamamla: iki ilan "tamamlandi"', $lr->findById($hedef['id'])['status'] === 'tamamlandi' && $lr->findById($bKit['id'])['status'] === 'tamamlandi');
-    $check('Tamamlanan takas değerlendirilebilir', (new ReviewService(new ReviewRepository($pdo), $or))->create($o1, $A['id'], 5, 'Sorunsuz') > 0);
+    $check('Tamamlanan takas değerlendirilebilir', $rs->create($o1, $A['id'], 5, 'Sorunsuz') > 0);
+    $check('R2: Takasın tarafı olmayan değerlendiremez (403)', $throws(fn() => $rs->create($o1, $C['id'], 5, 'x'), 403));
+    $check('R4: Aynı takas ikinci kez değerlendirilemez', $throws(fn() => $rs->create($o1, $A['id'], 4, 'tekrar')));
+    $check('R3: Puan 1-5 dışında olamaz', $throws(fn() => $rs->create($o1, $B['id'], 6, 'x')));
+    $check('Değerlendirilen kişinin ortalaması güncellendi', (new ReviewRepository($pdo))->summary($B['id'])['total'] === 1);
 } finally {
     foreach ([$A, $B, $C] as $u) $users->delete($u['id']);
     Events::reset();

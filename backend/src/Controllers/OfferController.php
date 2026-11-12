@@ -2,12 +2,13 @@
 /** SUNUM KATMANI - Takas teklifi uçları (hepsi giriş gerektirir) */
 class OfferController
 {
-    public function __construct(private TradeOfferService $service) {}
+    public function __construct(private TradeOfferService $service, private ?ReviewRepository $reviews = null) {}
 
     // GET /api/offers   gelen ve giden tekliflerim
     public function mine(): void
     {
-        Response::json(['success' => true, 'data' => $this->service->mine((int) Auth::requireUser()['id'])]);
+        $id = (int) Auth::requireUser()['id'];
+        Response::json(['success' => true, 'data' => $this->service->mine($id, $this->reviews?->reviewedOfferIds($id) ?? [])]);
     }
 
     // GET /api/listings/{id}/offers

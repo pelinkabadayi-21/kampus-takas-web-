@@ -1,3 +1,6 @@
+# Bu klasör dışarıya açık tek klasördür (üstteki backend/.htaccess erişimi kapatır, burada açılır)
+Require all granted
+
 # Var olmayan tüm adresleri index.php'ye yönlendir (Apache / XAMPP)
 RewriteEngine On
 

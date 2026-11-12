@@ -3,8 +3,20 @@ class ReviewRepository extends BaseRepository
 {
     public function create(array $d): int
     {
-        return $this->insert('reviews', array_intersect_key($d,
-            array_flip(['trade_offer_id', 'reviewer_id', 'reviewed_id', 'rating', 'comment'])));
+        $row = array_intersect_key($d, array_flip(['trade_offer_id', 'reviewer_id', 'reviewed_id', 'rating', 'comment']));
+        $row['created_at'] = date('Y-m-d H:i:s');
+        return $this->insert('reviews', $row);
+    }
+
+    public function exists(int $offerId, int $reviewerId): bool
+    {
+        return (bool) $this->fetchOne('SELECT 1 AS x FROM reviews WHERE trade_offer_id = ? AND reviewer_id = ?', [$offerId, $reviewerId]);
+    }
+
+    /** Kullanıcının değerlendirdiği teklif id'leri (arayüzde "Değerlendir" butonunu gizlemek için) */
+    public function reviewedOfferIds(int $reviewerId): array
+    {
+        return array_map('intval', array_column($this->fetchAll('SELECT trade_offer_id FROM reviews WHERE reviewer_id = ?', [$reviewerId]), 'trade_offer_id'));
     }
 
     public function forUser(int $userId): array

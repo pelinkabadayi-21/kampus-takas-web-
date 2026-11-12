@@ -53,7 +53,8 @@ $authController  = fn() => new AuthController($authService(), $config['auth']);
 $messageController = fn() => new MessageController(
     new MessageService(new MessageRepository($db()), new ListingRepository($db()), new TradeOfferRepository($db())),
     new MessageRepository($db()));
-$offerController = fn() => new OfferController(new TradeOfferService(new TradeOfferRepository($db()), new ListingRepository($db())));
+$offerController = fn() => new OfferController(new TradeOfferService(new TradeOfferRepository($db()), new ListingRepository($db())), new ReviewRepository($db()));
+$reviewController = fn() => new ReviewController(new ReviewService(new ReviewRepository($db()), new TradeOfferRepository($db())));
 $notificationController = fn() => new NotificationController(new NotificationRepository($db()),
     new MessageRepository($db()), new TradeOfferRepository($db()));
 
@@ -105,6 +106,10 @@ $router->put('/api/offers/{id}/{action}',              function (int $id, string
     if (!in_array($action, ['accept', 'reject', 'cancel', 'complete', 'withdraw'], true)) Response::error('Geçersiz işlem', 404);
     $registerListeners(); $offerController()->action($id, $action);
 });
+
+// --- Değerlendirmeler ---
+$router->post('/api/reviews',                          function () use ($registerListeners, $reviewController) { $registerListeners(); $reviewController()->store(); });
+$router->get('/api/users/{id}/reviews',                fn(int $id)         => $reviewController()->forUser($id));
 
 // --- Bildirimler ---
 $router->get('/api/notifications',                     fn()                => $notificationController()->index());

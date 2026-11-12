@@ -46,6 +46,11 @@ class NotificationListeners
                 'teklifler.html');
         });
 
+        Events::on('review.created', function (array $e) use ($n) {
+            $n->create($e['reviewed_id'], 'degerlendirme',
+                "⭐ \"{$e['listing_title']}\" takası için {$e['rating']} yıldız aldınız", 'hesabim.html');
+        });
+
         Events::on('offer.completed', function (array $e) use ($n) {
             $n->create($e['other_id'], 'degerlendirme',
                 "✅ \"{$e['listing_title']}\" takası tamamlandı. Karşı tarafı değerlendirmeyi unutmayın!",
