@@ -31,6 +31,9 @@ function offerCard(o, me, { showListing = true } = {}) {
   if (o.stage === 'beklemede' && iAmOwner) actions = btn('accept', '✔ Kabul et', '') + btn('reject', '✖ Reddet', 'btn-danger');
   if (o.stage === 'beklemede' && !iAmOwner) actions = btn('cancel', '↩ Geri çek', 'btn-danger');
   if (o.stage === 'kabul') actions = btn('complete', '✅ Takas tamamlandı', '') + btn('withdraw', 'Vazgeç', 'btn-danger');
+  if (o.stage === 'tamamlandi') actions += o.i_reviewed
+    ? '<span class="muted">✔ Değerlendirdiniz</span>'
+    : `<button class="btn btn-sm" data-review="${o.id}" data-name="${esc(other.name)}">⭐ Değerlendir</button>`;
   actions += `<a class="btn btn-sm btn-outline" href="mesajlar.html?ilan=${o.listing_id}&kisi=${other.id}" title="${esc(other.name)} ile mesajlaş">💬 Mesaj</a>`;
 
   return `
@@ -64,4 +67,44 @@ function bindOfferActions(container, onDone, onError) {
     try { await apiPut(`/offers/${b.dataset.offer}/${b.dataset.action}`); onDone(); }
     catch (err) { b.disabled = false; onError(err); }
   });
+}
+
+/** Tamamlanan takaslar için yıldızlı değerlendirme formu (Hafta 8: değerlendirme arayüzü) */
+function bindReviewActions(container, onDone, onError) {
+  container.addEventListener('click', e => {
+    const b = e.target.closest('button[data-review]');
+    if (!b) return;
+    const box = b.closest('.offer-actions');
+    if (box.querySelector('.review-form')) return;
+    box.insertAdjacentHTML('afterend', `
+      <form class="review-form">
+        <div><b>${b.dataset.name}</b> kişisini değerlendirin:</div>
+        <div class="star-input" role="radiogroup" aria-label="Puan">
+          ${[1, 2, 3, 4, 5].map(i => `<button type="button" data-v="${i}" aria-label="${i} yıldız">★</button>`).join('')}
+        </div>
+        <input name="comment" maxlength="500" placeholder="Yorumunuz (isteğe bağlı)">
+        <div class="offer-actions"><button class="btn btn-sm" type="submit">Gönder</button></div>
+      </form>`);
+    const form = box.nextElementSibling;
+    let rating = 0;
+    const stars = form.querySelectorAll('.star-input button');
+    const paint = v => stars.forEach(s => s.classList.toggle('on', +s.dataset.v <= v));
+    stars.forEach(s => {
+      s.addEventListener('click', () => { rating = +s.dataset.v; paint(rating); });
+      s.addEventListener('mouseenter', () => paint(+s.dataset.v));
+    });
+    form.querySelector('.star-input').addEventListener('mouseleave', () => paint(rating));
+    form.addEventListener('submit', async ev => {
+      ev.preventDefault();
+      if (!rating) { onError(new Error('Önce yıldız seçin')); return; }
+      try { await apiPost('/reviews', { trade_offer_id: +b.dataset.review, rating, comment: form.elements.comment.value }); onDone(); }
+      catch (err) { onError(err); }
+    });
+  });
+}
+
+function starsText(avg, count) {
+  if (avg == null) return '<span class="muted">Henüz değerlendirme yok</span>';
+  const full = Math.round(avg);
+  return `<span class="stars">${'★'.repeat(full)}${'☆'.repeat(5 - full)}</span> <b>${avg}</b> <small class="muted">(${count})</small>`;
 }

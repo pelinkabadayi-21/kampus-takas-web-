@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
     tab = t.dataset.tab; history.replaceState(null, '', '?sekme=' + tab); draw();
   }));
+  bindReviewActions(box, () => { notice.innerHTML = '<p class="success-box">⭐ Değerlendirmeniz kaydedildi, teşekkürler!</p>'; load(); },
+                         err => { notice.innerHTML = `<p class="error-box">${esc(err.message)}</p>`; });
   bindOfferActions(box, () => { notice.innerHTML = '<p class="success-box">✔ İşlem tamamlandı</p>'; load(); },
                         err => { notice.innerHTML = `<p class="error-box">${esc(err.message)}</p>`; });
   load();

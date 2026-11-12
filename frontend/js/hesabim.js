@@ -13,6 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     <button class="btn btn-outline" id="logout-btn">Çıkış yap</button>`;
   document.getElementById('logout-btn').addEventListener('click', logout);
 
+  // Aldığım değerlendirmeler
+  try {
+    const { data } = await apiGet(`/users/${u.id}/reviews`);
+    document.getElementById('reviews').innerHTML =
+      `<p>${starsText(data.summary.average, data.summary.total)}</p>` +
+      (data.items.map(r => `
+        <div class="review-item"><span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+          <b>${esc(r.reviewer_name)}</b> <small class="muted">${timeAgo(r.created_at)}</small>
+          ${r.comment ? `<div>${esc(r.comment)}</div>` : ''}</div>`).join('') || '<p class="muted">Tamamlanan takaslardan sonra karşı taraf sizi değerlendirebilir.</p>');
+  } catch (e) { document.getElementById('reviews').innerHTML = ''; }
+
   const grid = document.getElementById('my-listings');
   const info = document.getElementById('limit-info');
   try {

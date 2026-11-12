@@ -230,3 +230,13 @@ a.btn { display: inline-block; text-align: center; }
 .notif.unread small { font-weight: 400; }
 .notif-icon { font-size: 1.3rem; }
 .nav-count[hidden] { display: none; }
+
+/* ---------- Hafta 8: değerlendirme ---------- */
+.stars { color: #e8a317; letter-spacing: 1px; }
+.star-input { display: flex; gap: 2px; font-size: 1.6rem; margin: 4px 0; }
+.star-input button { background: none; border: 0; cursor: pointer; color: #ccc; font-size: inherit; padding: 0 2px; line-height: 1; }
+.star-input button.on { color: #e8a317; }
+.review-form { background: #faf9fd; border: 1px solid #e3dff0; border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+.review-form input { width: 100%; padding: 8px 10px; border: 1px solid #d9d4e8; border-radius: 8px; font: inherit; margin: 4px 0; }
+.review-item { padding: 8px 0; border-bottom: 1px solid #eee; }
+.review-item:last-child { border-bottom: 0; }

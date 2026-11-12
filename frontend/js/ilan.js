@@ -37,7 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <tr><th>Kategori</th><td><a href="ilanlar.html?category_id=${l.category_id}">${esc(l.category_name)}</a></td></tr>
         <tr><th>Ürün durumu</th><td>${COND_LABEL[l.item_condition]}</td></tr>
         <tr><th>Buluşma noktası</th><td>📍 ${esc(l.meeting_point || 'Belirtilmedi')}</td></tr>
-        <tr><th>İlan sahibi</th><td>${esc(l.owner_name)} ${l.owner_verified == 1 ? '<span title="Doğrulanmış öğrenci">✅</span>' : ''}</td></tr>
+        <tr><th>İlan sahibi</th><td>${esc(l.owner_name)} ${l.owner_verified == 1 ? '<span title="Doğrulanmış öğrenci">✅</span>' : ''}
+          <br>${starsText(l.owner_rating, l.owner_review_count)}</td></tr>
         <tr><th>Tarih</th><td>${new Date(l.created_at.replace(' ', 'T')).toLocaleDateString('tr-TR')}</td></tr>
       </table>
       <p class="description">${esc(l.description || '')}</p>
