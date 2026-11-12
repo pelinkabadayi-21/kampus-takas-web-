@@ -1,0 +1,6 @@
+.git
+.github
+backend/config/config.php
+backend/public/uploads/listings
+docs/raporlar
+*.log

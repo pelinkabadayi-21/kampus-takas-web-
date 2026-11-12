@@ -1,0 +1,8 @@
+# Render Blueprint (isteğe bağlı): Render panelinde "New + → Blueprint" ile bu dosyadan kurulabilir.
+services:
+  - type: web
+    name: kampus-takas
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /backend/public/api/health
