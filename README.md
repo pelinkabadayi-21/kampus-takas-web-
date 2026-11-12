@@ -17,7 +17,7 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 | Kategori / arama / filtre | ✅ Hafta 4 + 6 |
 | Mesajlaşma (gelen kutusu, sohbet, okundu bilgisi, spam/flood koruması) | ✅ Hafta 7 |
 | Takas teklifi (durum makinesi: kabul/red/geri çek/tamamla/vazgeç) | ✅ Hafta 7 |
-| Değerlendirme | ⏳ |
+| Değerlendirme (yıldız + yorum, satıcı puanı) | ✅ Hafta 8 |
 | Bildirim (olay tabanlı kanca, menü sayaçları) | ✅ Hafta 7 |
 | Yapay zekâ kategori/fiyat önerisi | ⏳ |
 | Öğrenci doğrulama · Bağış modu · Konum bazlı buluşma | 🟡 Doğrulama (Hafta 5), bağış ilanı ve önerilen buluşma noktaları (Hafta 6) |
@@ -37,6 +37,19 @@ frontend/   HTML/CSS/JS arayüz
 docs/       ER diyagramı, mimari şema, güvenlik notu, haftalık raporlar
 ```
 Ayrıntı: [docs/mimari.md](docs/mimari.md) · Veri modeli: [docs/er-diyagrami.md](docs/er-diyagrami.md)
+
+## 🌐 Canlı Yayın (Render)
+
+Proje Docker ile Render'da ücretsiz yayınlanır. Tek konteynerde PHP 8.2 + Apache + MariaDB çalışır (`Dockerfile`, `docker/start.sh`).
+
+1. https://render.com → **GitHub ile kayıt ol** ve Render'a bu depoya erişim izni ver.
+2. **+ New → Web Service** → `kampus-takas-web-` deposunu seç.
+3. **Language:** `Docker` (otomatik algılanır) · **Region:** Frankfurt · **Instance Type:** `Free` → **Deploy Web Service**.
+4. Kurulum 5–8 dakika sürer. Logs'ta `Kampüs Takas yayında` yazısı çıkınca link hazırdır: `https://<servis-adı>.onrender.com` (otomatik olarak `/frontend/` sayfasına yönlenir).
+
+Alternatif: **+ New → Blueprint** → bu depoyu seç (`render.yaml` ayarları otomatik doldurur).
+
+> **Ücretsiz plan sınırları:** 15 dakika kullanılmazsa servis uyur, ilk açılış yaklaşık 1 dakika sürer. Disk kalıcı değildir; her açılışta veritabanı örnek veriyle yeniden kurulur ve yüklenen fotoğraflar silinir.
 
 ## Kurulum (XAMPP)
 1. Depoyu `C:\xampp\htdocs\` içine klonla:
@@ -104,6 +117,8 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | GET | `/api/notifications` | 🔑 | Bildirimler |
 | GET | `/api/notifications/counts` | 🔑 | Menü sayaçları |
 | PUT | `/api/notifications/{id}/read`, `/read-all` | 🔑 | Okundu yap |
+| POST | `/api/reviews` | 🔑 takas tarafı | Değerlendirme `{trade_offer_id, rating, comment?}` (sadece tamamlanan takas) |
+| GET | `/api/users/{id}/reviews` | 🔓 | Kullanıcının puan ortalaması ve yorumları |
 
 Güvenlik önlemlerinin özeti: [docs/guvenlik-notu.md](docs/guvenlik-notu.md)
 
@@ -120,6 +135,8 @@ Ayrıntılar her haftanın raporunda (`docs/hafta-0N.md`), test: `php backend/te
 
 ## Haftalık İlerleme
 
+**Ara sürüm (vize): `v0.8.0`** — GitHub → Releases / Tags.
+
 Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile başlar. GitHub'da **Commits** sayfasında hangi haftada neyin eklendiğini, commit'e tıklayınca da değişen satırları görebilirsin. Haftanın ayrıntılı açıklaması `docs/hafta-NN.md` raporundadır.
 
 | Hafta | Konu | Rapor | Backend | Frontend |
@@ -129,3 +146,4 @@ Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile b
 | 5 | Kullanıcı Yönetimi ve Kimlik Doğrulama | [hafta-05.md](docs/hafta-05.md) · [güvenlik notu](docs/guvenlik-notu.md) | Kayıt/giriş/çıkış API, bcrypt, token (SHA-256 + HttpOnly çerez), hesap kilidi, rol ve sahiplik kontrolü, yönetim API, auth testi | Giriş, kayıt, hesabım (korumalı), yönetim paneli, giriş durumuna göre menü |
 | 6 | Çekirdek Modül A: İlan Oluşturma ve Katalog | [hafta-06.md](docs/hafta-06.md) | 7 iş kuralı (ilan limiti, durum geçişleri, mükerrer ilan…), fotoğraf yükleme (içerik kontrolü, EXIF/GPS silme, küçültme), kapak seçme, kendi ilanlarım, ürün durumu filtresi, ilan testi | İlan ver / düzenle formu, fotoğraf önizleme, galeri, sahibine düzenle/kaldır/sil, ilanlarım (durumlarla) |
 | 7 | Çekirdek Modül B: Mesajlaşma ve Takas Teklifi + Entegrasyon | [hafta-07.md](docs/hafta-07.md) | Mesaj kuralları M1–M7, teklif durum makinesi ve kuralları T1–T7, transaction ile kabul (çakışan teklifleri kapatma), olay tabanlı bildirim kancası, mesaj/teklif/bildirim uçları, migration 012, test | Mesajlar (iki panel, canlı yenileme, mobil), teklif formu (ilan türüne göre), gelen teklifler, teklifler sayfası, bildirimler, menü sayaçları |
+| 8 | VİZE: Ara Sürüm, Entegrasyon ve Sözlü Hazırlık | [hafta-08.md](docs/hafta-08.md) · [demo senaryosu](docs/demo-senaryosu.md) | Değerlendirme modülü (R1–R4), bilinen hataların giderilmesi (backend klasör erişimi, MySQL GROUP BY uyumu), Docker + Render canlı yayın, `v0.8.0` | API adresi otomatik (localhost bağımlılığı kaldırıldı), değerlendirme formu, satıcı puanı, aldığım değerlendirmeler |
