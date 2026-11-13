@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const box = document.getElementById('admin');
   const me = await currentUser();
 
+  // Kullanıcı listesini sunucudan alıp tablo olarak çizer; yetki yoksa uyarı gösterir.
   async function load() {
     try {
       const { data } = await apiGet('/admin/users');
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Ekranın köşesinde kısa bir başarı/hata mesajı gösterir.
   function flash(text, isError) {
     const f = document.getElementById('flash');
     f.className = isError ? 'error-box' : 'success-box';

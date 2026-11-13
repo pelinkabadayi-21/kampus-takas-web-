@@ -1,4 +1,5 @@
 <?php
+/** VERİ KATMANI - İlan ve ilan fotoğrafı tablolarının SQL sorguları (ekle, bul, ara, güncelle, sil). */
 class ListingRepository extends BaseRepository
 {
     private const EDITABLE = ['category_id', 'title', 'description', 'item_condition', 'listing_type',
@@ -12,26 +13,31 @@ class ListingRepository extends BaseRepository
         return $this->insert('listings', $row);
     }
 
+    /** İlana fotoğraf kaydı ekler (dosya adresi + sıra numarası). */
     public function addImage(int $listingId, string $url, int $order = 0): int
     {
         return $this->insert('listing_images', ['listing_id' => $listingId, 'image_url' => $url, 'sort_order' => $order]);
     }
 
+    /** id'ye göre tek fotoğraf kaydını getirir. */
     public function findImage(int $imageId): ?array
     {
         return $this->fetchOne('SELECT id, listing_id, image_url, sort_order FROM listing_images WHERE id = ?', [$imageId]);
     }
 
+    /** Bir ilanın bütün fotoğraflarını sırasıyla getirir. */
     public function imagesOf(int $listingId): array
     {
         return $this->fetchAll('SELECT id, image_url, sort_order FROM listing_images WHERE listing_id = ? ORDER BY sort_order, id', [$listingId]);
     }
 
+    /** Yeni eklenecek fotoğrafın sıra numarasını bulur. */
     public function nextImageOrder(int $listingId): int
     {
         return (int) $this->fetchOne('SELECT COALESCE(MAX(sort_order) + 1, 0) AS n FROM listing_images WHERE listing_id = ?', [$listingId])['n'];
     }
 
+    /** Fotoğraf kaydını siler. */
     public function deleteImage(int $imageId): int
     {
         return $this->execute('DELETE FROM listing_images WHERE id = ?', [$imageId]);
@@ -47,11 +53,13 @@ class ListingRepository extends BaseRepository
         }
     }
 
+    /** Kullanıcının yayındaki (aktif) ilan sayısı - ilan limiti kuralı için. */
     public function countActiveByUser(int $userId): int
     {
         return (int) $this->fetchOne("SELECT COUNT(*) AS n FROM listings WHERE user_id = ? AND status = 'aktif'", [$userId])['n'];
     }
 
+    /** Kullanıcının aynı başlıkta aktif ilanı var mı - mükerrer ilan kuralı için. */
     public function activeTitleExists(int $userId, string $title, ?int $exceptId = null): bool
     {
         return (bool) $this->fetchOne(
@@ -107,12 +115,14 @@ class ListingRepository extends BaseRepository
              LIMIT $limit OFFSET $offset", $params);
     }
 
+    /** Filtrelere uyan toplam ilan sayısı (sayfalama için). */
     public function count(array $f = []): int
     {
         [$where, $params] = $this->buildWhere($f);
         return (int) $this->fetchOne("SELECT COUNT(*) AS n FROM listings l $where", $params)['n'];
     }
 
+    /** Arama ve filtrelerden SQL WHERE koşulunu ve parametrelerini oluşturur (değerler ? ile güvenli gönderilir). */
     private function buildWhere(array $f): array
     {
         $w = []; $p = [];
@@ -134,6 +144,7 @@ class ListingRepository extends BaseRepository
         return $this->updateById('listings', $id, $d, self::EDITABLE);
     }
 
+    /** İlanın durumunu değiştirir (aktif / rezerve / tamamlandi / kaldirildi). */
     public function setStatus(int $id, string $status): int
     {
         return $this->execute('UPDATE listings SET status = ? WHERE id = ?', [$status, $id]);

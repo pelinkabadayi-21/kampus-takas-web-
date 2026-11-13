@@ -1,6 +1,8 @@
 <?php
+/** VERİ KATMANI - Mesaj tablosunun SQL sorguları (gönder, konuşmayı getir, gelen kutusu, okundu yap). */
 class MessageRepository extends BaseRepository
 {
+    /** Yeni mesaj kaydeder. */
     public function create(int $listingId, int $senderId, int $receiverId, string $body, ?string $createdAt = null): int
     {
         $row = ['listing_id' => $listingId, 'sender_id' => $senderId, 'receiver_id' => $receiverId, 'body' => $body];
@@ -8,6 +10,7 @@ class MessageRepository extends BaseRepository
         return $this->insert('messages', $row);
     }
 
+    /** id'ye göre tek mesaj getirir. */
     public function findById(int $id): ?array
     {
         return $this->fetchOne('SELECT id, listing_id, sender_id, receiver_id, body, is_read, created_at FROM messages WHERE id = ?', [$id]);
@@ -23,6 +26,7 @@ class MessageRepository extends BaseRepository
              ORDER BY id', [$listingId, $afterId, $userA, $userB, $userB, $userA]);
     }
 
+    /** Bu iki kişi bu ilan hakkında daha önce yazışmış mı? */
     public function hasConversation(int $listingId, int $userA, int $userB): bool
     {
         return (bool) $this->fetchOne(
@@ -56,6 +60,7 @@ class MessageRepository extends BaseRepository
              ORDER BY c.last_id DESC', [$userId, $userId, $userId, $userId]);
     }
 
+    /** Karşı taraftan gelen okunmamış mesajları "okundu" yapar. */
     public function markRead(int $listingId, int $receiverId, int $senderId): int
     {
         return $this->execute(
@@ -63,6 +68,7 @@ class MessageRepository extends BaseRepository
             [$listingId, $receiverId, $senderId]);
     }
 
+    /** Kullanıcının okunmamış mesaj sayısı. */
     public function unreadCount(int $userId): int
     {
         return (int) $this->fetchOne('SELECT COUNT(*) AS n FROM messages WHERE receiver_id = ? AND is_read = 0', [$userId])['n'];
@@ -74,6 +80,7 @@ class MessageRepository extends BaseRepository
         return (int) $this->fetchOne('SELECT COUNT(*) AS n FROM messages WHERE sender_id = ? AND created_at >= ?', [$userId, $since])['n'];
     }
 
+    /** Mesajı siler. */
     public function delete(int $id): int
     {
         return $this->execute('DELETE FROM messages WHERE id = ?', [$id]);

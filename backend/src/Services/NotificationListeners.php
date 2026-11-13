@@ -5,6 +5,7 @@
  */
 class NotificationListeners
 {
+    /** Bütün olay dinleyicilerini kaydeder: mesaj, teklif ve değerlendirme olaylarında ilgili kişiye bildirim yazılır. */
     public static function register(NotificationRepository $n): void
     {
         Events::on('message.sent', function (array $e) use ($n) {

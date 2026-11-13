@@ -47,6 +47,7 @@ class Auth
         return $u;
     }
 
+    /** Kullanıcı yönetici mi? (role = yonetici) */
     public static function isAdmin(?array $u = null): bool
     {
         $u ??= self::user();

@@ -1,3 +1,4 @@
+// Giriş sayfası: e-posta ve parolayı sunucuya gönderir, başarılıysa kullanıcıyı geldiği sayfaya (veya Hesabım'a) yönlendirir.
 document.addEventListener('DOMContentLoaded', async () => {
   if (await currentUser()) { location.href = safeNext('hesabim.html'); return; }
   if (new URLSearchParams(location.search).get('kayit') === '1') {

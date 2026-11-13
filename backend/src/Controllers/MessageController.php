@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - Mesajlaşma uçları (hepsi giriş gerektirir) */
 class MessageController
 {
+    /** Mesaj servisi ve okunmamış sayısı için mesaj deposu alınır. */
     public function __construct(private MessageService $service, private MessageRepository $repo) {}
 
     // GET /api/messages   gelen kutusu

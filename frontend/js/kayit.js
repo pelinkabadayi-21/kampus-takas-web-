@@ -1,3 +1,4 @@
+// Kayıt sayfası: parola kurallarını canlı gösterir, formu kontrol edip sunucuya gönderir, hataları alanların altına yazar.
 document.addEventListener('DOMContentLoaded', async () => {
   if (await currentUser()) { location.href = 'hesabim.html'; return; }
 
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     [v => /\p{L}/u.test(v), 'En az bir harf'],
     [v => /\d/.test(v), 'En az bir rakam'],
   ];
+  // Parola kurallarını (8 karakter, harf, rakam) yazdıkça ✔ veya ○ olarak gösterir.
   const draw = () => meter.innerHTML = rules.map(([ok, t]) =>
     `<li class="${ok(pw.value) ? 'ok' : ''}">${ok(pw.value) ? '✔' : '○'} ${t}</li>`).join('');
   pw.addEventListener('input', draw); draw();

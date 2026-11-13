@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - Bildirimler */
 class NotificationController
 {
+    /** Bildirim, mesaj ve teklif depoları alınır (menü sayaçları için). */
     public function __construct(private NotificationRepository $repo, private MessageRepository $messages,
                                 private TradeOfferRepository $offers) {}
 

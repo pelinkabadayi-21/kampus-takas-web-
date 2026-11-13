@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 3) Türe göre fiyat alanı
   const priceField = document.getElementById('price-field');
   const priceHint = document.getElementById('price-hint');
+  // İlan türüne göre fiyat alanını gösterir/gizler (bağışta fiyat yok).
   const syncType = () => {
     const t = form.elements.listing_type.value;
     priceField.hidden = t === 'bagis';
@@ -59,13 +60,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 4) Açıklama sayacı
   const desc = form.elements.description, counter = document.getElementById('desc-count');
+  // Açıklama karakter sayacını günceller.
   const count = () => counter.textContent = `${desc.value.length} / 2000`;
   desc.addEventListener('input', count); count();
 
   // 5) Fotoğraflar
   const grid = document.getElementById('photos');
   const photoErr = document.getElementById('photo-error');
+  // Toplam fotoğraf sayısı (kayıtlı + yeni eklenen).
   const total = () => existing.length + pending.length;
+  // Fotoğraf önizlemelerini çizer (kapak, sil, kapak yap butonlarıyla).
   const drawPhotos = () => {
     grid.innerHTML =
       existing.map((img, i) => `

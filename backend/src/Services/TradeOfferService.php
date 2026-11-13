@@ -23,19 +23,23 @@
  */
 class TradeOfferService
 {
+    /** Teklif ve ilan depoları alınır. */
     public function __construct(
         private TradeOfferRepository $offers,
         private ListingRepository $listings,
         mixed $legacyNotifications = null     // eski imza (Hafta 4) ile uyumluluk; bildirimler artık olaylarla
     ) {}
 
+    /** İşlemi yapan kişiyi her zaman dizi biçimine çevirir (id veya dizi gelebilir). */
     private static function actor(array|int $a): array
     {
         return is_array($a) ? $a : ['id' => $a, 'role' => 'ogrenci'];
     }
 
+    /** Şu anki tarih-saat (veritabanına yazmak için). */
     private function now(): string { return date('Y-m-d H:i:s'); }
 
+    /** id'ye göre teklifi getirir; yoksa 404 hatası verir. */
     public function get(int $id): array
     {
         return $this->offers->findById($id) ?? throw new ValidationException('Teklif bulunamadı', [], 404);
@@ -199,6 +203,7 @@ class TradeOfferService
         return array_map([$this, 'decorate'], $this->offers->forListing($listingId, $all ? null : (int) $viewer['id']));
     }
 
+    /** Kullanıcının gelen ve gönderdiği teklifler; her birinde "değerlendirdim mi" bilgisi. */
     public function mine(int $userId, array $reviewedOfferIds = []): array
     {
         $flag = function (array $o) use ($reviewedOfferIds) { $o['i_reviewed'] = in_array((int) $o['id'], $reviewedOfferIds, true); return $o; };

@@ -13,6 +13,7 @@ class AuthService
     /** Geçerli ama hiçbir parolaya karşılık gelmeyen bcrypt özeti (zamanlama saldırısına karşı) */
     private const DUMMY_HASH = '$2y$10$/G4YqGUmkYZkZmnaP1L0huGUSHnrRVU85im8sw0Sib.onu9BpBkVW';
 
+    /** Kullanıcı ve token depoları ile oturum ayarları alınır. */
     public function __construct(
         private UserRepository $users,
         private AuthTokenRepository $tokens,
@@ -57,6 +58,7 @@ class AuthService
         return null;
     }
 
+    /** E-posta okulun alan adıyla mı bitiyor? (ör. @bingol.edu.tr -> doğrulanmış öğrenci) */
     private function isStudentEmail(string $email): bool
     {
         $domain = substr(strrchr($email, '@'), 1);
@@ -120,6 +122,7 @@ class AuthService
         return $row;
     }
 
+    /** Çıkış: token'ı veritabanından siler, böylece tekrar kullanılamaz. */
     public function logout(?string $token): void
     {
         if ($token) $this->tokens->deleteByHash(hash('sha256', $token));

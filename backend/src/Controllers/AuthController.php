@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - /api/auth/* uçları */
 class AuthController
 {
+    /** Giriş/kayıt işlerini yapan servis ve oturum ayarları alınır. */
     public function __construct(private AuthService $auth, private array $cfg) {}
 
     // POST /api/auth/register
@@ -39,6 +40,7 @@ class AuthController
         Response::json(['success' => true, 'user' => Auth::requireUser()]);
     }
 
+    /** Token'ı tarayıcıya güvenli çerez olarak yazar (HttpOnly: JavaScript okuyamaz, SameSite: başka sitelerden gönderilmez). */
     private function setCookie(string $value, int $expires): void
     {
         setcookie($this->cfg['cookie_name'], $value, [

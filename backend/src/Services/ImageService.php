@@ -17,6 +17,7 @@ class ImageService
     private const MAX_SIDE  = 1600;
     private const ALLOWED   = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
 
+    /** İlan deposu, fotoğrafların kaydedileceği klasör ve adres öneki alınır. */
     public function __construct(
         private ListingRepository $listings,
         private string $uploadDir,          // .../backend/public/uploads/listings
@@ -69,6 +70,7 @@ class ImageService
         return $this->listings->findImage($id);
     }
 
+    /** Fotoğrafı siler: önce yetki kontrolü, sonra veritabanı kaydı ve diskteki dosya. */
     public function delete(int $listingId, int $imageId, ListingService $listingService, ?array $actor): void
     {
         $listingService->assertCanModify($listingService->get($listingId), $actor);
@@ -87,11 +89,13 @@ class ImageService
         $this->listings->transaction(fn() => $this->listings->setCoverImage($listingId, $imageId));
     }
 
+    /** İlan silinirken o ilanın bütün fotoğraf dosyalarını diskten siler. */
     public function deleteFilesOfListing(int $listingId): void
     {
         foreach ($this->listings->imagesOf($listingId) as $img) $this->removeFile($img['image_url']);
     }
 
+    /** Tek bir fotoğraf dosyasını siler; sadece bizim ürettiğimiz biçimdeki dosyalara dokunur (güvenlik). */
     private function removeFile(string $url): void
     {
         // Sadece kendi klasörümüzdeki, bizim ürettiğimiz biçimdeki dosyaları sil

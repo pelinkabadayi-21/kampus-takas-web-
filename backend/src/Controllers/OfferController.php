@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - Takas teklifi uçları (hepsi giriş gerektirir) */
 class OfferController
 {
+    /** Teklif servisi ve "değerlendirdim mi" bilgisi için değerlendirme deposu alınır. */
     public function __construct(private TradeOfferService $service, private ?ReviewRepository $reviews = null) {}
 
     // GET /api/offers   gelen ve giden tekliflerim

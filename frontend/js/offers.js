@@ -8,6 +8,7 @@ const STAGE_LABEL = {
   iptal:      ['↩ İptal edildi', 'badge-status-kaldirildi'],
 };
 
+// Teklifin içeriğini yazar: "🔄 kitap + 💰 50 ₺" gibi.
 function offerSummary(o) {
   const parts = [];
   if (o.offered_listing_id) parts.push(`🔄 <a href="ilan.html?id=${o.offered_listing_id}">${esc(o.offered_listing_title)}</a>`);
@@ -25,6 +26,7 @@ function offerCard(o, me, { showListing = true } = {}) {
   const iAmOwner = me.id == o.listing_owner_id;
   const other = iAmOwner ? { id: o.offerer_id, name: o.offerer_name } : { id: o.listing_owner_id, name: o.owner_name };
   const [label, cls] = STAGE_LABEL[o.stage] || [o.stage, ''];
+  // Teklif işlemi için buton HTML'i üretir.
   const btn = (action, text, style = 'btn-outline') => `<button class="btn btn-sm ${style}" data-offer="${o.id}" data-action="${action}">${text}</button>`;
 
   let actions = '';
@@ -103,6 +105,7 @@ function bindReviewActions(container, onDone, onError) {
   });
 }
 
+// Puanı yıldızlarla gösterir: ★★★★☆ 4.2 (5)
 function starsText(avg, count) {
   if (avg == null) return '<span class="muted">Henüz değerlendirme yok</span>';
   const full = Math.round(avg);

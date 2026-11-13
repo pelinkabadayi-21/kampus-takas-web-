@@ -1,3 +1,4 @@
+// Teklifler sayfası: gelen ve gönderdiğim teklifleri sekmelerde listeler; kabul/red/geri çek/tamamla/değerlendir butonlarını bağlar.
 document.addEventListener('DOMContentLoaded', async () => {
   let me;
   try { me = await requireLogin(); } catch (e) { return; }
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     giden: 'Henüz teklif vermediniz. <a href="ilanlar.html">İlanlara göz atın →</a>',
   };
 
+  // Seçili sekmedeki (gelen / gönderdiğim) teklifleri sıralayıp çizer.
   function draw() {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     const list = tab === 'gelen' ? data.received : data.sent;
@@ -20,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     box.innerHTML = list.map(o => offerCard(o, me)).join('') || `<p class="muted">${EMPTY[tab]}</p>`;
   }
 
+  // Teklifleri sunucudan alır ve sekme sayaçlarını günceller.
   async function load() {
     try {
       data = (await apiGet('/offers')).data;

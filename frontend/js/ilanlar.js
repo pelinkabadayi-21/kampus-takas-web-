@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   load();
 });
 
+// Filtreleri okuyup ilanları sunucudan getirir ve kart olarak listeler.
 async function load(append = false) {
   const form = document.getElementById('filters');
   const grid = document.getElementById('grid');

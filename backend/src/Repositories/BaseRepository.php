@@ -6,6 +6,7 @@
  */
 abstract class BaseRepository
 {
+    /** Veritabanı bağlantısı (PDO) alınır; tüm repository'ler bunu kullanır. */
     public function __construct(protected PDO $db) {}
 
     /** Tek satır döndürür, bulunamazsa null. */
@@ -17,6 +18,7 @@ abstract class BaseRepository
         return $row === false ? null : $row;
     }
 
+    /** Sorguyu çalıştırır ve bütün satırları dizi olarak döndürür. */
     protected function fetchAll(string $sql, array $params = []): array
     {
         $st = $this->db->prepare($sql);
@@ -32,6 +34,7 @@ abstract class BaseRepository
         return $st->rowCount();
     }
 
+    /** Verilen tabloya yeni satır ekler ve eklenen satırın id'sini döndürür. */
     protected function insert(string $table, array $data): int
     {
         $cols = array_keys($data);

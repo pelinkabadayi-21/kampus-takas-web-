@@ -7,6 +7,7 @@ class Database
 {
     private static ?PDO $pdo = null;
 
+    /** Veritabanına bir kez bağlanır, sonraki çağrılarda aynı bağlantıyı döndürür. */
     public static function connect(array $cfg): PDO
     {
         if (self::$pdo === null) {

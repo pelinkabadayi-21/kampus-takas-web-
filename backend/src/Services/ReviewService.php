@@ -10,8 +10,10 @@
  */
 class ReviewService
 {
+    /** Değerlendirme ve teklif depoları alınır. */
     public function __construct(private ReviewRepository $reviews, private TradeOfferRepository $offers) {}
 
+    /** Değerlendirme kaydeder; önce R1-R4 kurallarını kontrol eder, sonra bildirim gönderir. */
     public function create(int $offerId, int $reviewerId, int $rating, ?string $comment): int
     {
         $offer = $this->offers->findById($offerId) ?? throw new ValidationException('Teklif bulunamadı', [], 404);

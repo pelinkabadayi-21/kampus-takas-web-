@@ -18,6 +18,7 @@ class MessageService
 {
     public const MAX_PER_MINUTE = 10;
 
+    /** Mesaj, ilan ve teklif depoları alınır. */
     public function __construct(
         private MessageRepository $messages,
         private ListingRepository $listings,
@@ -87,6 +88,7 @@ class MessageService
         ];
     }
 
+    /** Gelen kutusu: her konuşma için son mesaj ve okunmamış sayısı. */
     public function inbox(int $userId): array
     {
         return $this->messages->inbox($userId);

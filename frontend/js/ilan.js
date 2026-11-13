@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (me) loadOffers(l, me);
 });
 
+// İlanın tekliflerini gösterir: ilan sahibine hepsi, diğerlerine sadece kendi teklifleri.
 async function loadOffers(l, me) {
   const box = document.getElementById('offers-box');
   try {
@@ -100,6 +101,7 @@ async function loadOffers(l, me) {
   } catch (e) { box.hidden = true; }
 }
 
+// Teklif formunu açar; form ilan türüne göre değişir (satış: tutar, takas: ilan seçimi, bağış: talep).
 async function openOfferForm(l) {
   const panel = document.getElementById('offer-form');
   const type = l.listing_type;

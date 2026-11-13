@@ -6,6 +6,7 @@ const ROOT = location.pathname.includes('/pages/') ? '../' : '';
 const PAGES = ROOT ? '' : 'pages/';
 let _me; // undefined = henüz sorulmadı, null = giriş yok
 
+// Giriş yapmış kullanıcıyı sunucudan sorar; sonucu hatırlar, tekrar sormaz.
 async function currentUser() {
   if (_me !== undefined) return _me;
   try { _me = (await apiGet('/auth/me')).user; }
@@ -23,12 +24,14 @@ async function requireLogin() {
   return u;
 }
 
+// Çıkış yapar ve ana sayfaya döner.
 async function logout() {
   try { await apiPost('/auth/logout'); } catch (e) {}
   _me = null;
   location.href = ROOT + 'index.html';
 }
 
+// Üst menüyü çizer: giriş yapılmışsa İlan Ver/Mesajlar/Teklifler, yöneticiyse Yönetim bağlantısını gösterir.
 async function renderNav() {
   const nav = document.getElementById('main-nav');
   if (!nav) return;
@@ -80,6 +83,7 @@ function showFieldErrors(form, errors = {}) {
   }
 }
 
+// Girişten sonra dönülecek adresi alır; sadece site içi adreslere izin verir (açık yönlendirme saldırısına karşı).
 function safeNext(fallback) {
   const n = new URLSearchParams(location.search).get('next');
   // Sadece site içi adrese yönlendir (açık yönlendirme saldırısını önler)

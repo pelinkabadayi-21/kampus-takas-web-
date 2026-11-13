@@ -16,12 +16,16 @@ async function api(path, options = {}) {
   return data;
 }
 
+// GET isteği: parametreleri adrese ekler (?q=...&category_id=...).
 const apiGet = (path, params) => {
   const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null)) : '';
   return api(path + qs);
 };
+// POST isteği: yeni kayıt gönderir.
 const apiPost   = (path, body) => api(path, { method: 'POST', body });
+// PUT isteği: güncelleme gönderir.
 const apiPut    = (path, body) => api(path, { method: 'PUT', body });
+// DELETE isteği: silme.
 const apiDelete = (path)       => api(path, { method: 'DELETE' });
 
 /** Dosya yükleme (multipart/form-data). Content-Type'ı tarayıcı kendisi ayarlar. */
@@ -57,8 +61,10 @@ function listingCard(i, { showStatus = false } = {}) {
       </div>
     </a>`;
 }
+// Sayfa ana dizindeyse "pages/" ekler, pages içindeyse eklemez (bağlantılar doğru çalışsın diye).
 const PAGES_PREFIX = () => location.pathname.includes('/pages/') ? '' : 'pages/';
 
+// Fiyatı gösterir: bağışsa "Ücretsiz", fiyatsız takassa "Takaslık", değilse "120 ₺".
 function formatPrice(item) {
   if (item.listing_type === 'bagis') return 'Ücretsiz';
   if (item.price == null) return 'Takaslık';

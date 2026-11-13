@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - İlan ve fotoğraf uç noktaları */
 class ListingController
 {
+    /** İlan kurallarını yapan servis ve fotoğraf servisi alınır. */
     public function __construct(private ListingService $service, private ImageService $images) {}
 
     // GET /api/listings?q=&category_id=&listing_type=&item_condition=&min_price=&max_price=&sort=&limit=&offset=   (herkese açık, sadece aktif ilanlar)

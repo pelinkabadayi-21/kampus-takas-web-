@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// Durum rozetini yeşil (çalışıyor) veya kırmızı (hata) yapar.
 function setStatus(el, ok, text) {
   el.textContent = text;
   el.className = 'status ' + (ok ? 'ok' : 'fail');

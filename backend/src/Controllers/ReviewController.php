@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - Değerlendirme uçları */
 class ReviewController
 {
+    /** Değerlendirme kurallarını yapan servis alınır. */
     public function __construct(private ReviewService $service) {}
 
     // POST /api/reviews   {trade_offer_id, rating, comment?}   (giriş gerekli)

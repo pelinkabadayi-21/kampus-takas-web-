@@ -13,11 +13,13 @@ class Events
     /** @var array<string, callable[]> */
     private static array $listeners = [];
 
+    /** Bir olayı dinleyecek fonksiyonu kaydeder (ör. "offer.accepted" olunca bildirim yaz). */
     public static function on(string $event, callable $listener): void
     {
         self::$listeners[$event][] = $listener;
     }
 
+    /** Olayı duyurur: o olayı dinleyen bütün fonksiyonları sırayla çalıştırır. */
     public static function emit(string $event, array $payload = []): void
     {
         foreach (self::$listeners[$event] ?? [] as $listener) {

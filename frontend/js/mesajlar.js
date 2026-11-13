@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let threads = [];
   let poll;
 
+  // Konuşma listesini sunucudan alır.
   async function loadInbox() {
     try {
       threads = (await apiGet('/messages')).data;
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { threadsEl.innerHTML = `<p class="error-box">${esc(e.message)}</p>`; }
   }
 
+  // Konuşma listesini çizer (son mesaj, okunmamış sayısı).
   function drawInbox() {
     threadsEl.innerHTML = threads.map(t => `
       <a class="thread-item ${current && current.listingId == t.listing_id && current.otherId == t.other_id ? 'active' : ''} ${t.unread > 0 ? 'unread' : ''}"
@@ -38,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     open(+a.dataset.l, +a.dataset.u);
   });
 
+  // Seçilen konuşmayı açar: mesajları gösterir, mesaj yazma kutusunu bağlar, 8 sn'de bir yeni mesaj kontrolü başlatır.
   async function open(listingId, otherId) {
     clearInterval(poll);
     current = { listingId, otherId, lastId: 0 };
@@ -88,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     poll = setInterval(() => { if (!document.hidden) { fetchNew(); loadInbox(); } }, 8000);
   }
 
+  // Yeni gelen mesajları balon olarak ekler ve en alta kaydırır.
   function appendMessages(list) {
     const box = document.getElementById('messages');
     if (!box || !list.length) return;
@@ -101,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     box.scrollTop = box.scrollHeight;
   }
 
+  // Sadece son mesajdan sonra gelen yeni mesajları çeker.
   async function fetchNew() {
     if (!current) return;
     try { appendMessages((await apiGet(`/messages/${current.listingId}/${current.otherId}`, { after: current.lastId })).messages); }

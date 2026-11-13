@@ -14,6 +14,7 @@ class TradeOfferRepository extends BaseRepository
         JOIN users offerer     ON offerer.id = o.offerer_id
         LEFT JOIN listings ol  ON ol.id = o.offered_listing_id';
 
+    /** Yeni takas teklifi kaydeder. */
     public function create(array $d): int
     {
         $row = array_intersect_key($d, array_flip(['listing_id', 'offerer_id', 'offered_listing_id', 'offered_amount', 'note', 'created_at']));
@@ -21,11 +22,13 @@ class TradeOfferRepository extends BaseRepository
         return $this->insert('trade_offers', $row);
     }
 
+    /** id'ye göre teklifi, ilan ve taraf bilgileriyle getirir. */
     public function findById(int $id): ?array
     {
         return $this->fetchOne(self::SELECT . ' WHERE o.id = ?', [$id]);
     }
 
+    /** Bir ilana gelen teklifler (istenirse sadece bir kişinin teklifleri). */
     public function forListing(int $listingId, ?int $onlyOffererId = null): array
     {
         $sql = self::SELECT . ' WHERE o.listing_id = ?'; $p = [$listingId];
@@ -45,12 +48,14 @@ class TradeOfferRepository extends BaseRepository
         return $this->fetchAll(self::SELECT . ' WHERE o.offerer_id = ? ORDER BY o.id DESC LIMIT 100', [$userId]);
     }
 
+    /** Bu kişinin bu ilana bekleyen bir teklifi var mı? */
     public function pendingExists(int $listingId, int $offererId): bool
     {
         return (bool) $this->fetchOne(
             "SELECT 1 AS x FROM trade_offers WHERE listing_id = ? AND offerer_id = ? AND status = 'beklemede'", [$listingId, $offererId]);
     }
 
+    /** Kullanıcının ilanlarına gelen bekleyen teklif sayısı. */
     public function countPendingReceived(int $userId): int
     {
         return (int) $this->fetchOne(
@@ -71,6 +76,7 @@ class TradeOfferRepository extends BaseRepository
             array_merge([$exceptOfferId], $listingIds, $listingIds));
     }
 
+    /** Teklifin durumunu ve yanıt zamanını değiştirir. */
     public function setStatus(int $id, string $status, ?string $respondedAt = null): int
     {
         return $this->execute('UPDATE trade_offers SET status = ?, responded_at = ? WHERE id = ?', [$status, $respondedAt, $id]);
@@ -84,6 +90,7 @@ class TradeOfferRepository extends BaseRepository
             [$listingId, $exceptOfferId]);
     }
 
+    /** Teklifi siler. */
     public function delete(int $id): int
     {
         return $this->execute('DELETE FROM trade_offers WHERE id = ?', [$id]);

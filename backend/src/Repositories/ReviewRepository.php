@@ -1,6 +1,8 @@
 <?php
+/** VERİ KATMANI - Değerlendirme (puan + yorum) tablosunun SQL sorguları. */
 class ReviewRepository extends BaseRepository
 {
+    /** Yeni değerlendirme kaydeder. */
     public function create(array $d): int
     {
         $row = array_intersect_key($d, array_flip(['trade_offer_id', 'reviewer_id', 'reviewed_id', 'rating', 'comment']));
@@ -8,6 +10,7 @@ class ReviewRepository extends BaseRepository
         return $this->insert('reviews', $row);
     }
 
+    /** Bu kişi bu takası daha önce değerlendirmiş mi? */
     public function exists(int $offerId, int $reviewerId): bool
     {
         return (bool) $this->fetchOne('SELECT 1 AS x FROM reviews WHERE trade_offer_id = ? AND reviewer_id = ?', [$offerId, $reviewerId]);
@@ -19,6 +22,7 @@ class ReviewRepository extends BaseRepository
         return array_map('intval', array_column($this->fetchAll('SELECT trade_offer_id FROM reviews WHERE reviewer_id = ?', [$reviewerId]), 'trade_offer_id'));
     }
 
+    /** Bir kullanıcının aldığı değerlendirmeleri, yazanın adıyla getirir. */
     public function forUser(int $userId): array
     {
         return $this->fetchAll(
@@ -34,6 +38,7 @@ class ReviewRepository extends BaseRepository
         return ['average' => $r['average'] !== null ? (float) $r['average'] : null, 'total' => (int) $r['total']];
     }
 
+    /** Değerlendirmeyi siler. */
     public function delete(int $id): int
     {
         return $this->execute('DELETE FROM reviews WHERE id = ?', [$id]);

@@ -7,11 +7,16 @@ class Router
 {
     private array $routes = [];
 
+    /** GET isteği için rota ekler (veri okuma). */
     public function get(string $p, callable $h): void    { $this->add('GET', $p, $h); }
+    /** POST isteği için rota ekler (yeni kayıt). */
     public function post(string $p, callable $h): void   { $this->add('POST', $p, $h); }
+    /** PUT isteği için rota ekler (güncelleme). */
     public function put(string $p, callable $h): void    { $this->add('PUT', $p, $h); }
+    /** DELETE isteği için rota ekler (silme). */
     public function delete(string $p, callable $h): void { $this->add('DELETE', $p, $h); }
 
+    /** Rotayı kaydeder; "/api/listings/{id}" gibi adresleri, sayıyı yakalayan bir düzenli ifadeye çevirir. */
     private function add(string $method, string $path, callable $handler): void
     {
         // {id} gibi parametreler sayıdır; {action} ise harflerden oluşan bir kelimedir
@@ -20,6 +25,7 @@ class Router
         $this->routes[$method][$regex] = $handler;
     }
 
+    /** Gelen isteğin adresine uyan rotayı bulur ve fonksiyonunu çalıştırır; bulamazsa 404 döner. */
     public function dispatch(string $method, string $uri): void
     {
         $path = rtrim(parse_url($uri, PHP_URL_PATH), '/') ?: '/';

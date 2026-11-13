@@ -1,6 +1,8 @@
 <?php
+/** VERİ KATMANI - Bildirim tablosunun SQL sorguları (oluştur, listele, okundu yap). */
 class NotificationRepository extends BaseRepository
 {
+    /** Kullanıcıya yeni bildirim ekler. */
     public function create(int $userId, string $type, string $content, ?string $link = null): int
     {
         return $this->insert('notifications', [
@@ -9,6 +11,7 @@ class NotificationRepository extends BaseRepository
         ]);
     }
 
+    /** Kullanıcının son bildirimlerini getirir (istenirse sadece okunmamışları). */
     public function forUser(int $userId, bool $onlyUnread = false, int $limit = 50): array
     {
         return $this->fetchAll(
@@ -16,6 +19,7 @@ class NotificationRepository extends BaseRepository
             . ($onlyUnread ? ' AND is_read = 0' : '') . ' ORDER BY id DESC LIMIT ' . max(1, min(100, $limit)), [$userId]);
     }
 
+    /** Okunmamış bildirim sayısı (menüdeki zil için). */
     public function unreadCount(int $userId): int
     {
         return (int) $this->fetchOne('SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND is_read = 0', [$userId])['n'];
@@ -27,11 +31,13 @@ class NotificationRepository extends BaseRepository
         return $this->execute('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?', [$id, $userId]);
     }
 
+    /** Kullanıcının bütün bildirimlerini okundu yapar. */
     public function markAllRead(int $userId): int
     {
         return $this->execute('UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0', [$userId]);
     }
 
+    /** Bildirimi siler. */
     public function delete(int $id): int
     {
         return $this->execute('DELETE FROM notifications WHERE id = ?', [$id]);

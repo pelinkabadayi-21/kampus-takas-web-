@@ -2,6 +2,7 @@
 /** SUNUM KATMANI - Sadece "yonetici" rolünün erişebildiği uçlar */
 class AdminController
 {
+    /** Kullanıcı verilerine erişmek için UserRepository alınır. */
     public function __construct(private UserRepository $users) {}
 
     // GET /api/admin/users

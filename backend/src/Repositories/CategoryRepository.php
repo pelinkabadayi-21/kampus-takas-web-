@@ -1,6 +1,8 @@
 <?php
+/** VERİ KATMANI - Kategori tablosunun SQL sorguları. */
 class CategoryRepository extends BaseRepository
 {
+    /** Bütün kategorileri, her birindeki aktif ilan sayısıyla getirir. */
     public function all(): array
     {
         return $this->fetchAll(
@@ -10,11 +12,13 @@ class CategoryRepository extends BaseRepository
         );
     }
 
+    /** id'ye göre tek kategori getirir (yoksa null). */
     public function findById(int $id): ?array
     {
         return $this->fetchOne('SELECT id, name, slug FROM categories WHERE id = ?', [$id]);
     }
 
+    /** Yeni kategori ekler. */
     public function create(string $name, string $slug): int
     {
         return $this->insert('categories', ['name' => $name, 'slug' => $slug]);

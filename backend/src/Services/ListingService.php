@@ -44,12 +44,14 @@ class ListingService
         ];
     }
 
+    /** İlan ve kategori depoları ile (isteğe bağlı) fotoğraf servisi alınır. */
     public function __construct(
         private ListingRepository $listings,
         private CategoryRepository $categories,
         private ?ImageService $images = null
     ) {}
 
+    /** Filtrelere uyan ilanları ve toplam sayıyı döndürür. */
     public function search(array $filters): array
     {
         return [
@@ -64,6 +66,7 @@ class ListingService
         return $this->search(['user_id' => $userId, 'status' => 'hepsi', 'limit' => 50]);
     }
 
+    /** id'ye göre ilanı getirir; yoksa 404 hatası verir. */
     public function get(int $id): array
     {
         return $this->listings->findById($id) ?? throw new ValidationException('İlan bulunamadı', [], 404);
@@ -122,6 +125,7 @@ class ListingService
         return $this->get($id);
     }
 
+    /** İlanı siler: sahiplik kontrolü yapar, fotoğraf dosyalarını ve kaydı siler. */
     public function delete(int $id, ?array $actor = null): void
     {
         $this->assertCanModify($this->get($id), $actor);
