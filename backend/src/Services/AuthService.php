@@ -4,16 +4,16 @@
  *
  * Akış:
  *  Kayıt  -> parola kurallara uyuyor mu -> password_hash() ile bcrypt özeti -> users
- *  Giriş  -> kilitli mi -> password_verify() -> rastgele token üret -> SHA-256 özetini sakla
- *           -> token'ı HttpOnly çerez olarak gönder
- *  İstek  -> çerezdeki/başlıktaki token'ın özeti veritabanında var ve süresi dolmamış mı
+ *  Giriş  -> kilitli mi -> password_verify() -> rastgele oturum anahtarı üret -> SHA-256 özetini sakla
+ *           -> oturum anahtarını HttpOnly çerez olarak gönder
+ *  İstek  -> çerezdeki/başlıktaki oturum anahtarının özeti veritabanında var ve süresi dolmamış mı
  */
 class AuthService
 {
     /** Geçerli ama hiçbir parolaya karşılık gelmeyen bcrypt özeti (zamanlama saldırısına karşı) */
     private const DUMMY_HASH = '$2y$10$/G4YqGUmkYZkZmnaP1L0huGUSHnrRVU85im8sw0Sib.onu9BpBkVW';
 
-    /** Kullanıcı ve token depoları ile oturum ayarları alınır. */
+    /** Kullanıcı ve oturum anahtarı depoları ile oturum ayarları alınır. */
     public function __construct(
         private UserRepository $users,
         private AuthTokenRepository $tokens,
@@ -46,7 +46,7 @@ class AuthService
         // Bir tane bile hata varsa kaydetme, hataları forma geri gönder
         if ($e) throw new ValidationException('Formda hatalar var', $e);
 
-        // Hata yoksa kullanıcıyı kaydet (parola UserRepository'de hash'lenir)
+        // Hata yoksa kullanıcıyı kaydet (parola UserRepository'de özetlenir)
         $id = $this->users->create([
             'full_name' => $name, 'email' => $email, 'password' => $pass,
             'student_no' => $no, 'department' => trim((string) ($d['department'] ?? '')),
@@ -83,7 +83,7 @@ class AuthService
     }
 
     // ------------------------------------------------------------------ GİRİŞ
-    /** Başarılıysa [token, user] döner. */
+    /** Başarılıysa [oturum anahtarı, kullanıcı] döner. */
     public function login(string $email, string $password, ?string $userAgent = null): array
     {
         // Şu anki zaman (saniye)
@@ -129,23 +129,23 @@ class AuthService
         // Süresi dolmuş eski oturumları temizle
         $this->tokens->deleteExpired(date('Y-m-d H:i:s', $now));
 
-        // Rastgele, tahmin edilemez 64 karakterlik token üret
+        // Rastgele, tahmin edilemez 64 karakterlik oturum anahtarı üret
         $token = bin2hex(random_bytes(32));                     // 256 bit, tahmin edilemez
-        // Veritabanına token'ın kendisini değil SHA-256 özetini yaz; 8 saat geçerli
+        // Veritabanına oturum anahtarının kendisini değil SHA-256 özetini yaz; 8 saat geçerli
         $this->tokens->create((int) $user['id'], hash('sha256', $token),
             date('Y-m-d H:i:s', $now + 3600 * (int) ($this->cfg['token_ttl_hours'] ?? 8)), $userAgent);
 
-        // Token'ı (çereze yazılacak) ve kullanıcı bilgisini döndür
+        // Oturum anahtarını (çereze yazılacak) ve kullanıcı bilgisini döndür
         return [$token, $this->users->findById((int) $user['id'])];
     }
 
     // ------------------------------------------------------------------ OTURUM
     public function userFromToken(?string $token): ?array
     {
-        // Token yoksa ya da biçimi yanlışsa veritabanına hiç sorma
+        // Oturum anahtarı yoksa ya da biçimi yanlışsa veritabanına hiç sorma
         if (!$token || !preg_match('/^[a-f0-9]{64}$/', $token)) return null;
         $now = date('Y-m-d H:i:s');
-        // Token'ın özetini veritabanında ara; süresi dolmamış olmalı
+        // Oturum anahtarının özetini veritabanında ara; süresi dolmamış olmalı
         $row = $this->tokens->findValid(hash('sha256', $token), $now);
         if (!$row) return null;
         // Son kullanılma zamanını güncelle
@@ -154,7 +154,7 @@ class AuthService
         return $row;
     }
 
-    /** Çıkış: token'ı veritabanından siler, böylece tekrar kullanılamaz. */
+    /** Çıkış: oturum anahtarını veritabanından siler, böylece tekrar kullanılamaz. */
     public function logout(?string $token): void
     {
         if ($token) $this->tokens->deleteByHash(hash('sha256', $token));

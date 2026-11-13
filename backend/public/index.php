@@ -1,6 +1,6 @@
 <?php
 /**
- * API GİRİŞ NOKTASI - Tüm istekler buradan geçer (front controller).
+ * API GİRİŞ NOKTASI - Tüm istekler buradan geçer (tek giriş noktası).
  * Örnek: http://localhost/kampus-takas-web-/backend/public/api/health
  */
 declare(strict_types=1);
@@ -23,8 +23,7 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 
-// CORS: Frontend ve API aynı adreste (localhost) çalıştığı için çerezler sorunsuz gider.
-// CORS: frontend'in API'ye istek atmasına izin ver
+// CORS (farklı adresten erişim izni): Arayüz ve API aynı adreste (localhost) çalıştığı için çerezler sorunsuz gider.
 header('Access-Control-Allow-Origin: ' . $config['app']['allowed_origin']);
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -46,14 +45,13 @@ $db = function () use ($config): PDO {
 };
 $authService = fn() => new AuthService(new UserRepository($db()), new AuthTokenRepository($db()), $config['auth']);
 
-// Her istekte: token varsa kullanıcıyı bul (sadece gerektiğinde)
-// Her istekte çerezdeki token'dan giriş yapan kullanıcıyı bul
+// Her istekte: oturum anahtarı varsa kullanıcıyı bul (sadece gerektiğinde)
 Auth::setResolver(function () use ($authService, $config) {
     $token = Auth::token($config['auth']['cookie_name']);
     return $token ? $authService()->userFromToken($token) : null;
 });
 
-// Controller'ları ihtiyaç olunca oluşturan küçük fabrikalar (repository → service → controller)
+// Denetleyicileri ihtiyaç olunca oluşturan küçük fabrikalar (veri katmanı → iş katmanı → denetleyici)
 $listingController = function () use ($db) {
     $repo   = new ListingRepository($db());
     $images = new ImageService($repo, __DIR__ . '/uploads/listings');
@@ -68,7 +66,7 @@ $reviewController = fn() => new ReviewController(new ReviewService(new ReviewRep
 $notificationController = fn() => new NotificationController(new NotificationRepository($db()),
     new MessageRepository($db()), new TradeOfferRepository($db()));
 
-// Bildirim kancası: mesaj/teklif olaylarını dinleyip bildirim yazar (DB'ye sadece olay olunca bağlanır)
+// Bildirim kancası: mesaj/teklif olaylarını dinleyip bildirim yazar (veritabanına sadece olay olunca bağlanır)
 $listenersRegistered = false;
 // Bildirim dinleyicilerini sadece bir kez kaydet
 $registerListeners = function () use (&$listenersRegistered, $db) {

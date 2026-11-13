@@ -1,5 +1,5 @@
 // Oturum yardımcıları ve giriş durumuna göre değişen menü.
-// NOT: Token JavaScript'te tutulmaz; tarayıcı HttpOnly çerezi kendisi gönderir.
+// NOT: Oturum anahtarı JavaScript'te tutulmaz; tarayıcı HttpOnly çerezi kendisi gönderir.
 // Buradaki rol kontrolleri sadece GÖRÜNÜM içindir; asıl kontrol sunucuda yapılır.
 
 const ROOT = location.pathname.includes('/pages/') ? '../' : '';

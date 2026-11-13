@@ -25,7 +25,7 @@ class UserRepository extends BaseRepository
     /** id'ye göre kullanıcıyı getirir (parola özeti hariç). */
     public function findById(int $id): ?array
     {
-        // ? yer tutucusu: id değeri SQL'e ayrı gönderilir (SQL injection olmaz)
+        // ? yer tutucusu: id değeri SQL'e ayrı gönderilir (SQL enjeksiyonu olmaz)
         return $this->fetchOne('SELECT ' . self::PUBLIC_COLS . ' FROM users WHERE id = ?', [$id]);
     }
 

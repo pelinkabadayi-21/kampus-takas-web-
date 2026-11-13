@@ -1,7 +1,7 @@
 <?php
 class TradeOfferRepository extends BaseRepository
 {
-    /** Teklif + ilan + taraflar: kontrol ve listeleme için ortak SELECT */
+    /** Teklif + ilan + taraflar: kontrol ve listeleme için ortak seçme sorgusu */
     // Teklifle birlikte ilanın başlığı/durumu, sahibinin ve teklif verenin adı, karşılığında önerilen ilan ve kapak fotoğrafı da gelsin diye tabloları birleştiren ortak sorgu
     private const SELECT = '
         SELECT o.*, l.title AS listing_title, l.user_id AS listing_owner_id, l.status AS listing_status,

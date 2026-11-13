@@ -4,7 +4,7 @@ async function api(path, options = {}) {
     credentials: 'include',            // oturum çerezini (HttpOnly) isteğe ekle
     headers: { 'Content-Type': 'application/json' },
     ...options,
-    // İsteği backend'e gönder; gövde varsa JSON'a çevir
+    // İsteği sunucuya gönder; gövde varsa JSON'a çevir
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
   // Cevabı JSON olarak oku
@@ -29,7 +29,7 @@ const apiGet = (path, params) => {
 const apiPost   = (path, body) => api(path, { method: 'POST', body });
 // PUT isteği: güncelleme gönderir.
 const apiPut    = (path, body) => api(path, { method: 'PUT', body });
-// DELETE isteği: silme.
+// Silme (DELETE) isteği.
 const apiDelete = (path)       => api(path, { method: 'DELETE' });
 
 /** Dosya yükleme (multipart/form-data). Content-Type'ı tarayıcı kendisi ayarlar. */
@@ -44,7 +44,6 @@ async function apiUpload(path, formData) {
 }
 
 // Yüklenen fotoğrafların adresi: API adresinden "/api" kısmı atılır (…/backend/public/uploads/…)
-// Fotoğrafların adresi: API adresinden /api kısmı çıkarılır
 const UPLOAD_BASE = API_BASE.replace(/\/api\/?$/, '') + '/';
 const imgUrl = path => path ? UPLOAD_BASE + path : '';
 

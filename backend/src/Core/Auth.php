@@ -1,7 +1,7 @@
 <?php
 /**
  * YETKİLENDİRME KATMANI
- * Her istekte token'ı okur, kullanıcıyı belirler ve korumalı uçlarda kontrol yapar.
+ * Her istekte oturum anahtarını okur, kullanıcıyı belirler ve korumalı uçlarda kontrol yapar.
  * Kural: Yetki kontrolü HER ZAMAN sunucuda yapılır. Arayüzde butonu gizlemek güvenlik değildir.
  */
 class Auth
@@ -11,15 +11,15 @@ class Auth
     private static bool $resolved = false;
     private static ?Closure $resolver = null;
 
-    /** index.php kullanıcıyı token'dan bulacak fonksiyonu verir (DB'ye sadece gerekirse bağlanılır). */
+    /** index.php kullanıcıyı oturum anahtarından bulacak fonksiyonu verir (veritabanına sadece gerekirse bağlanılır). */
     public static function setResolver(Closure $fn): void { self::$resolver = $fn; }
 
-    /** Token önce HttpOnly çerezden, yoksa "Authorization: Bearer ..." başlığından okunur. */
+    /** Oturum anahtarı önce HttpOnly çerezden, yoksa "Authorization: Bearer ..." başlığından okunur. */
     public static function token(string $cookieName = 'kt_token'): ?string
     {
         // Önce tarayıcının gönderdiği HttpOnly çereze bak
         if (!empty($_COOKIE[$cookieName])) return $_COOKIE[$cookieName];
-        // Çerez yoksa "Authorization: Bearer <token>" başlığına bak (Postman gibi araçlar için)
+        // Çerez yoksa "Authorization: Bearer <oturum anahtarı>" başlığına bak (Postman gibi araçlar için)
         $h = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
         return preg_match('/^Bearer\s+(\S+)$/i', $h, $m) ? $m[1] : null;
     }
@@ -30,7 +30,7 @@ class Auth
         // Kullanıcıyı sadece ilk sorulduğunda veritabanından bul
         if (!self::$resolved) {
             self::$resolved = true;
-            // index.php'nin verdiği fonksiyonla token'dan kullanıcıyı bul
+            // index.php'nin verdiği fonksiyonla oturum anahtarından kullanıcıyı bul
             self::$user = self::$resolver ? (self::$resolver)() : null;
         }
         return self::$user;

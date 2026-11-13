@@ -1,12 +1,12 @@
 <?php
 /**
- * VERİ KATMANI - Tüm repository'lerin ortak atası.
- * Tüm sorgular "prepared statement" ile çalışır: kullanıcı verisi SQL'e asla
- * doğrudan yapıştırılmaz, böylece SQL injection engellenir.
+ * VERİ KATMANI - Tüm veri katmanı sınıflarının ortak atası.
+ * Tüm sorgular "hazır sorgu" ile çalışır: kullanıcı verisi SQL'e asla
+ * doğrudan yapıştırılmaz, böylece SQL enjeksiyonu engellenir.
  */
 abstract class BaseRepository
 {
-    /** Veritabanı bağlantısı (PDO) alınır; tüm repository'ler bunu kullanır. */
+    /** Veritabanı bağlantısı (PDO) alınır; tüm veri katmanı sınıfları bunu kullanır. */
     public function __construct(protected PDO $db) {}
 
     /** Tek satır döndürür, bulunamazsa null. */
@@ -28,7 +28,7 @@ abstract class BaseRepository
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /** INSERT/UPDATE/DELETE çalıştırır, etkilenen satır sayısını döndürür. */
+    /** Ekleme/güncelleme/silme sorgusu çalıştırır, etkilenen satır sayısını döndürür. */
     protected function execute(string $sql, array $params = []): int
     {
         $st = $this->db->prepare($sql);
@@ -64,8 +64,8 @@ abstract class BaseRepository
     }
 
     /**
-     * İŞLEM (transaction): içindeki tüm sorgular ya birlikte başarılı olur
-     * ya da hata olursa hepsi geri alınır (rollback).
+     * TOPLU İŞLEM (transaction): içindeki tüm sorgular ya birlikte başarılı olur
+     * ya da hata olursa hepsi geri alınır.
      */
     public function transaction(callable $work)
     {

@@ -5,10 +5,10 @@
  * Hangi dosyanın çalıştığını "migrations" tablosunda tutar; aynı dosya iki kez çalışmaz.
  *
  * Kullanım (XAMPP -> Shell):
- *   php backend/database/migrate.php            -> bekleyen migration'ları çalıştır
+ *   php backend/database/migrate.php            -> bekleyen veritabanı güncellemelerini çalıştır
  *   php backend/database/migrate.php --fresh    -> tüm tabloları silip baştan kur
  *   php backend/database/migrate.php --seed     -> kurulumdan sonra örnek veriyi yükle
- *   php backend/database/migrate.php --status   -> hangi migration çalıştı, listele
+ *   php backend/database/migrate.php --status   -> hangi güncelleme çalıştı, listele
  */
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit('Sadece komut satırından çalışır.'); }
 

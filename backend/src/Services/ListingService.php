@@ -90,7 +90,7 @@ class ListingService
     }
 
     /**
-     * $actor: ilanı açan kullanıcı (oturumdan). Verilmezse (seed/test) limit kontrolü yapılmaz.
+     * $actor: ilanı açan kullanıcı (oturumdan). Verilmezse (örnek veri/test) ilan sınırı kontrolü yapılmaz.
      */
     public function create(array $d, ?array $actor = null): array
     {

@@ -1,6 +1,6 @@
 <?php
 /**
- * KİMLİK DOĞRULAMA TESTİ - Kayıt, parola hash, giriş, token, kilit ve rol kontrollerini dener.
+ * KİMLİK DOĞRULAMA TESTİ - Kayıt, parola özeti, giriş, oturum anahtarı, kilit ve rol kontrollerini dener.
  * Kendi test kullanıcısını oluşturur ve sonunda siler.
  * Kullanım: php backend/tests/auth_test.php
  */
@@ -51,7 +51,7 @@ try {
     $check('Öğrenci yönetici sayılmaz', !Auth::isAdmin($student));
     $check('Yönetici rolü tanınıyor', Auth::isAdmin(['id' => 1, 'role' => 'yonetici']));
 } finally {
-    if ($id) $users->delete($id);    // token'lar CASCADE ile silinir
+    if ($id) $users->delete($id);    // oturum anahtarları CASCADE ile silinir
 }
 echo $fail ? "\n$fail test BAŞARISIZ\n" : "\nTüm kimlik doğrulama testleri başarılı ✔\n";
 exit($fail ? 1 : 0);

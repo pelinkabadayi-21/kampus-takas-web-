@@ -18,7 +18,7 @@
  *  T5  Tutar 0 - 100.000 ₺; not en fazla 255 karakter
  *  T6  Kabul/red sadece ilan sahibi; geri çekme sadece teklif veren; tamamlama/vazgeçme iki taraf
  *  T8  (Öğrenci kuralı) Satılık ilanda teklif, ilan fiyatının yarısından az olamaz
- *  T7  Kabul TEK İŞLEMDE (transaction): teklif kabul, diğer bekleyen teklifler kapanır,
+ *  T7  Kabul TEK TOPLU İŞLEMDE (transaction): teklif kabul, diğer bekleyen teklifler kapanır,
  *      iki ilan da rezerve olur, rezerve ilanları içeren başka bekleyen teklifler iptal edilir
  */
 class TradeOfferService
@@ -189,7 +189,7 @@ class TradeOfferService
         if ($o['status'] !== 'kabul' || $o['listing_status'] !== 'rezerve') throw new ValidationException('Sadece kabul edilmiş ve devam eden takas tamamlanabilir');
 
         $this->offers->transaction(function () use ($o) {
-            // İki ilanı da "tamamlandı" yap (transaction içinde, ikisi birlikte)
+            // İki ilanı da "tamamlandı" yap (toplu işlem içinde, ikisi birlikte)
             $this->listings->setStatus((int) $o['listing_id'], 'tamamlandi');
             if ($o['offered_listing_id']) $this->listings->setStatus((int) $o['offered_listing_id'], 'tamamlandi');
         });

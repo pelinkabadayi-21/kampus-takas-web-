@@ -3,7 +3,7 @@
  * OLAY (EVENT) SİSTEMİ - "Bildirim kancası"
  *
  * Servisler bir şey olduğunda sadece olayı duyurur: Events::emit('offer.accepted', [...]).
- * Bu olayı kimin dinlediğini bilmezler. Dinleyiciler (listener) ayrı bir yerde kaydedilir.
+ * Bu olayı kimin dinlediğini bilmezler. Dinleyiciler ayrı bir yerde kaydedilir.
  *
  * Faydası: Mesaj ve teklif servisleri bildirim tablosuna bağımlı değildir. Yarın e-posta
  * bildirimi eklenmek istenirse servislere dokunmadan yeni bir dinleyici eklemek yeterlidir.

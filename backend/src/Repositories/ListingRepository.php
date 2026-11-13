@@ -161,7 +161,7 @@ class ListingRepository extends BaseRepository
         return [$w ? 'WHERE ' . implode(' AND ', $w) : '', $p];
     }
 
-    // ---------- UPDATE ----------
+    // ---------- GÜNCELLEME ----------
     public function update(int $id, array $d): int
     {
         // Sadece EDITABLE listesindeki sütunlar güncellenir
@@ -174,7 +174,7 @@ class ListingRepository extends BaseRepository
         return $this->execute('UPDATE listings SET status = ? WHERE id = ?', [$status, $id]);
     }
 
-    // ---------- DELETE ----------
+    // ---------- SİLME ----------
     public function delete(int $id): int
     {
         // Fotoğraflar, mesajlar, favoriler ON DELETE CASCADE ile otomatik silinir

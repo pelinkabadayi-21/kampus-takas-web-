@@ -17,13 +17,13 @@ class AuthController
     public function login(): void
     {
         $d = Request::json();
-        // E-posta + parola doğruysa servis bir token ve kullanıcı bilgisi döndürür
+        // E-posta + parola doğruysa servis bir oturum anahtarı ve kullanıcı bilgisi döndürür
         [$token, $user] = $this->auth->login((string) ($d['email'] ?? ''), (string) ($d['password'] ?? ''),
                                              $_SERVER['HTTP_USER_AGENT'] ?? null);
-        // Token'ı HttpOnly çereze yaz (8 saat geçerli)
+        // Oturum anahtarını HttpOnly çereze yaz (8 saat geçerli)
         $this->setCookie($token, time() + 3600 * (int) $this->cfg['token_ttl_hours']);
 
-        // Token yanıtta da döner: Postman gibi araçlarla "Authorization: Bearer" ile test edilebilsin.
+        // Oturum anahtarı yanıtta da döner: Postman gibi araçlarla "Authorization: Bearer" ile test edilebilsin.
         // Tarayıcıdaki site bunu SAKLAMAZ, HttpOnly çerezi kullanır.
         Response::json(['success' => true, 'user' => $user, 'token' => $token,
                         'expires_in' => 3600 * (int) $this->cfg['token_ttl_hours']]);
@@ -32,7 +32,7 @@ class AuthController
     // POST /api/auth/logout
     public function logout(): void
     {
-        // Token'ı veritabanından sil, çerezi geçmiş tarihle sıfırla
+        // Oturum anahtarını veritabanından sil, çerezi geçmiş tarihle sıfırla
         $this->auth->logout(Auth::token($this->cfg['cookie_name']));
         $this->setCookie('', time() - 3600);
         Response::json(['success' => true, 'message' => 'Çıkış yapıldı']);
@@ -45,13 +45,13 @@ class AuthController
         Response::json(['success' => true, 'user' => Auth::requireUser()]);
     }
 
-    /** Token'ı tarayıcıya güvenli çerez olarak yazar (HttpOnly: JavaScript okuyamaz, SameSite: başka sitelerden gönderilmez). */
+    /** Oturum anahtarını tarayıcıya güvenli çerez olarak yazar (HttpOnly: JavaScript okuyamaz, SameSite: başka sitelerden gönderilmez). */
     private function setCookie(string $value, int $expires): void
     {
         setcookie($this->cfg['cookie_name'], $value, [
             'expires'  => $expires,
             'path'     => '/',
-            'httponly' => true,       // JavaScript okuyamaz -> XSS ile token çalınamaz
+            'httponly' => true,       // JavaScript okuyamaz -> XSS ile oturum anahtarı çalınamaz
             'secure'   => (bool) $this->cfg['cookie_secure'],
             'samesite' => 'Lax',      // başka sitelerden gelen POST isteklerine çerez eklenmez (CSRF koruması)
         ]);

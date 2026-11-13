@@ -14,7 +14,7 @@ class Router
     public function post(string $p, callable $h): void   { $this->add('POST', $p, $h); }
     /** PUT isteği için rota ekler (güncelleme). */
     public function put(string $p, callable $h): void    { $this->add('PUT', $p, $h); }
-    /** DELETE isteği için rota ekler (silme). */
+    /** Silme (DELETE) isteği için rota ekler. */
     public function delete(string $p, callable $h): void { $this->add('DELETE', $p, $h); }
 
     /** Rotayı kaydeder; "/api/listings/{id}" gibi adresleri, sayıyı yakalayan bir düzenli ifadeye çevirir. */

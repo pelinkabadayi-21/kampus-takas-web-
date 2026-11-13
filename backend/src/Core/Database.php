@@ -1,7 +1,7 @@
 <?php
 /**
- * VERİ KATMANI - Veritabanı bağlantısı (PDO, tekil nesne / singleton).
- * Repository sınıfları bağlantıyı buradan alır.
+ * VERİ KATMANI - Veritabanı bağlantısı (PDO, tekil nesne).
+ * Veri katmanı sınıfları bağlantıyı buradan alır.
  */
 class Database
 {
@@ -19,7 +19,7 @@ class Database
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 // Satırları ['sütun' => değer] biçiminde dizi olarak getir
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,   // SQL injection'a karşı gerçek prepared statement
+                PDO::ATTR_EMULATE_PREPARES   => false,   // SQL enjeksiyonuna karşı gerçek hazır sorgu
             ]);
         }
         // Hep aynı bağlantıyı döndür (her sorguda yeniden bağlanmamak için)
