@@ -9,6 +9,7 @@ class MessageController
     public function inbox(): void
     {
         $u = Auth::requireUser();
+        // Gelen kutusu + okunmamış mesaj sayısı
         Response::json(['success' => true, 'data' => $this->service->inbox((int) $u['id']),
                         'unread' => $this->repo->unreadCount((int) $u['id'])]);
     }
@@ -17,6 +18,7 @@ class MessageController
     public function conversation(int $listingId, int $otherId): void
     {
         $u = Auth::requireUser();
+        // ?after=ID ile sadece yeni mesajlar istenebilir
         Response::json(['success' => true] + $this->service->conversation($listingId, $u, $otherId, (int) ($_GET['after'] ?? 0)));
     }
 
@@ -25,6 +27,7 @@ class MessageController
     {
         $u = Auth::requireUser();
         $d = Request::json();
+        // Mesajı gönder (alıcı, ilan, spam kuralları serviste)
         $msg = $this->service->send((int) ($d['listing_id'] ?? 0), $u,
                                     isset($d['receiver_id']) ? (int) $d['receiver_id'] : null, (string) ($d['body'] ?? ''));
         Response::json(['success' => true, 'data' => $msg], 201);

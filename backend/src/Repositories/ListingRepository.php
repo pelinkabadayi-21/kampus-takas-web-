@@ -2,13 +2,16 @@
 /** VERİ KATMANI - İlan ve ilan fotoğrafı tablolarının SQL sorguları (ekle, bul, ara, güncelle, sil). */
 class ListingRepository extends BaseRepository
 {
+    // Güncellenmesine izin verilen sütunlar (user_id yok: ilanın sahibi değiştirilemez)
     private const EDITABLE = ['category_id', 'title', 'description', 'item_condition', 'listing_type',
                               'price', 'ai_suggested_price', 'meeting_point', 'status'];
 
     // ---------- CREATE ----------
     public function create(array $d): int
     {
+        // Gelen veriden sadece tabloya ait sütunları al
         $row = array_intersect_key($d, array_flip(array_merge(['user_id'], self::EDITABLE)));
+        // Oluşturulma zamanını PHP'den yaz (saat dilimi tutarlı olsun)
         $row['created_at'] = date('Y-m-d H:i:s');
         return $this->insert('listings', $row);
     }
@@ -34,6 +37,7 @@ class ListingRepository extends BaseRepository
     /** Yeni eklenecek fotoğrafın sıra numarasını bulur. */
     public function nextImageOrder(int $listingId): int
     {
+        // En büyük sıra numarasının bir fazlası; hiç fotoğraf yoksa 0
         return (int) $this->fetchOne('SELECT COALESCE(MAX(sort_order) + 1, 0) AS n FROM listing_images WHERE listing_id = ?', [$listingId])['n'];
     }
 
@@ -46,7 +50,9 @@ class ListingRepository extends BaseRepository
     /** Seçilen fotoğrafı 0. sıraya alır, diğerlerini birer kaydırır. */
     public function setCoverImage(int $listingId, int $imageId): void
     {
+        // Kapak dışındaki fotoğraflar 1, 2, 3... sırasını alır
         $order = 1;
+        // Her fotoğrafı dolaş: seçilen fotoğraf 0 (kapak), diğerleri sırayla
         foreach ($this->imagesOf($listingId) as $img) {
             $this->execute('UPDATE listing_images SET sort_order = ? WHERE id = ?',
                            [(int) $img['id'] === $imageId ? 0 : $order++, $img['id']]);
@@ -63,6 +69,7 @@ class ListingRepository extends BaseRepository
     public function activeTitleExists(int $userId, string $title, ?int $exceptId = null): bool
     {
         return (bool) $this->fetchOne(
+            // Büyük/küçük harfe bakmadan aynı başlık var mı (düzenlenen ilanın kendisi hariç)
             "SELECT 1 AS x FROM listings WHERE user_id = ? AND status = 'aktif' AND LOWER(title) = LOWER(?) AND id <> ?",
             [$userId, $title, $exceptId ?? 0]);
     }
@@ -78,7 +85,9 @@ class ListingRepository extends BaseRepository
              JOIN categories c ON c.id = l.category_id
              JOIN users u      ON u.id = l.user_id
              WHERE l.id = ?', [$id]);
+        // İlan bulunduysa fotoğraflarını da ekle
         if ($row) {
+            // Fotoğraflar ayrı tabloda (1 ilan -> N fotoğraf)
             $row['images'] = $this->imagesOf($id);
         }
         return $row;
@@ -93,13 +102,16 @@ class ListingRepository extends BaseRepository
     {
         [$where, $params] = $this->buildWhere($f);
 
+        // Sıralama sadece bu seçeneklerden biri olabilir; kullanıcı SQL'e kendi metnini ekleyemez
         $sort = match ($f['sort'] ?? 'yeni') {
             'ucuz'  => 'l.price IS NULL, l.price ASC',
             'pahali'=> 'l.price DESC',
             'eski'  => 'l.created_at ASC',
             default => 'l.created_at DESC, l.id DESC',
         };
+        // Sayfa başına 1-50 ilan (varsayılan 12)
         $limit  = max(1, min(50, (int) ($f['limit'] ?? 12)));
+        // Kaçıncı ilandan başlanacağı (sayfalama)
         $offset = max(0, (int) ($f['offset'] ?? 0));
 
         return $this->fetchAll(
@@ -119,28 +131,40 @@ class ListingRepository extends BaseRepository
     public function count(array $f = []): int
     {
         [$where, $params] = $this->buildWhere($f);
+        // Aynı filtrelerle toplam ilan sayısı
         return (int) $this->fetchOne("SELECT COUNT(*) AS n FROM listings l $where", $params)['n'];
     }
 
     /** Arama ve filtrelerden SQL WHERE koşulunu ve parametrelerini oluşturur (değerler ? ile güvenli gönderilir). */
     private function buildWhere(array $f): array
     {
+        // $w: WHERE koşulları, $p: bu koşulların değerleri
         $w = []; $p = [];
+        // Varsayılan olarak sadece yayındaki ilanlar; "hepsi" verilirse tüm durumlar
         $status = $f['status'] ?? 'aktif';
         if ($status !== 'hepsi') { $w[] = 'l.status = ?'; $p[] = $status; }
+        // Arama kelimesi: başlıkta veya açıklamada geçsin (% = herhangi bir metin)
         if (!empty($f['q']))            { $w[] = '(l.title LIKE ? OR l.description LIKE ?)'; $p[] = "%{$f['q']}%"; $p[] = "%{$f['q']}%"; }
+        // Kategori filtresi
         if (!empty($f['category_id']))  { $w[] = 'l.category_id = ?';  $p[] = (int) $f['category_id']; }
+        // Tür filtresi (satis / takas / bagis)
         if (!empty($f['listing_type'])) { $w[] = 'l.listing_type = ?'; $p[] = $f['listing_type']; }
+        // Ürün durumu filtresi (yeni, iyi...)
         if (!empty($f['item_condition'])) { $w[] = 'l.item_condition = ?'; $p[] = $f['item_condition']; }
+        // Belirli bir kullanıcının ilanları
         if (!empty($f['user_id']))      { $w[] = 'l.user_id = ?';      $p[] = (int) $f['user_id']; }
+        // En düşük fiyat
         if (isset($f['min_price']) && $f['min_price'] !== '') { $w[] = 'l.price >= ?'; $p[] = (float) $f['min_price']; }
+        // En yüksek fiyat
         if (isset($f['max_price']) && $f['max_price'] !== '') { $w[] = 'l.price <= ?'; $p[] = (float) $f['max_price']; }
+        // Koşulları AND ile birleştir; hiç koşul yoksa WHERE yazma
         return [$w ? 'WHERE ' . implode(' AND ', $w) : '', $p];
     }
 
     // ---------- UPDATE ----------
     public function update(int $id, array $d): int
     {
+        // Sadece EDITABLE listesindeki sütunlar güncellenir
         return $this->updateById('listings', $id, $d, self::EDITABLE);
     }
 

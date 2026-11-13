@@ -5,6 +5,7 @@ class ReviewRepository extends BaseRepository
     /** Yeni değerlendirme kaydeder. */
     public function create(array $d): int
     {
+        // Sadece izin verilen alanları al, tarihi ekle
         $row = array_intersect_key($d, array_flip(['trade_offer_id', 'reviewer_id', 'reviewed_id', 'rating', 'comment']));
         $row['created_at'] = date('Y-m-d H:i:s');
         return $this->insert('reviews', $row);
@@ -34,6 +35,7 @@ class ReviewRepository extends BaseRepository
     /** Kullanıcının ortalama puanı ve yorum sayısı */
     public function summary(int $userId): array
     {
+        // Ortalama puan (1 ondalık) ve toplam değerlendirme sayısı
         $r = $this->fetchOne('SELECT ROUND(AVG(rating), 1) AS average, COUNT(*) AS total FROM reviews WHERE reviewed_id = ?', [$userId]);
         return ['average' => $r['average'] !== null ? (float) $r['average'] : null, 'total' => (int) $r['total']];
     }

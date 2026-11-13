@@ -28,6 +28,7 @@ class MessageService
     /** @param array|int $sender Oturumdaki kullanıcı (geriye uyumluluk için id de olabilir) */
     public function send(int $listingId, array|int $sender, ?int $receiverId, string $body): array
     {
+        // Gönderen bilgisi ve boşlukları temizlenmiş mesaj metni
         $sender   = is_array($sender) ? $sender : ['id' => $sender];
         $senderId = (int) $sender['id'];
         $body     = trim($body);
@@ -38,6 +39,7 @@ class MessageService
         $ownerId = (int) $listing['user_id'];
 
         // M3: alıcıyı belirle
+        // İlan sahibi değilsem mesaj her zaman ilan sahibine gider
         if ($senderId !== $ownerId) {
             $receiverId = $ownerId;
         } elseif (!$receiverId) {
@@ -45,21 +47,26 @@ class MessageService
         }
         if ($senderId === (int) $receiverId) throw new ValidationException('Kendinize mesaj gönderemezsiniz');                        // M2
 
+        // Bu iki kişi arasında bu ilanla ilgili daha önce konuşma var mı
         $existing = $this->messages->hasConversation($listingId, $senderId, (int) $receiverId);
 
         // M4
+        // İlan sahibi, kendisine yazmamış ya da teklif vermemiş birine ilk mesajı atamaz
         if ($senderId === $ownerId && !$existing && !($this->offers?->pendingExists($listingId, (int) $receiverId))) {
             throw new ValidationException('İlan sahibi konuşma başlatamaz; sadece size yazan ya da teklif veren kişiye cevap verebilirsiniz', [], 403);
         }
         // M5
+        // Satılmış/kapalı ilan için yeni konuşma başlatılamaz
         if (!$existing && !in_array($listing['status'], ['aktif', 'rezerve'], true)) {
             throw new ValidationException('Bu ilan yayında değil; yeni konuşma başlatılamaz');
         }
         // M6
+        // Spam koruması: son 1 dakikada 10'dan fazla mesaj atılamaz
         if ($this->messages->sentSince($senderId, date('Y-m-d H:i:s', time() - 60)) >= self::MAX_PER_MINUTE) {
             throw new ValidationException('Çok hızlı mesaj gönderiyorsunuz, biraz bekleyin', [], 429);
         }
 
+        // Mesajı veritabanına kaydet
         $id = $this->messages->create($listingId, $senderId, (int) $receiverId, $body, date('Y-m-d H:i:s'));
 
         Events::emit('message.sent', [                                           // bildirim kancası
@@ -67,6 +74,7 @@ class MessageService
             'sender_id' => $senderId, 'sender_name' => $sender['full_name'] ?? 'Bir kullanıcı',
             'receiver_id' => (int) $receiverId,
         ]);
+        // Kaydedilen mesajı geri döndür (ekranda hemen gösterilir)
         return $this->messages->findById($id);
     }
 
@@ -76,14 +84,17 @@ class MessageService
         $listing = $this->listings->findById($listingId) ?? throw new ValidationException('İlan bulunamadı', [], 404);
         $me = (int) $viewer['id'];
         $owner = (int) $listing['user_id'];
+        // Konuşmanın taraflarından biri mutlaka ilan sahibi olmalı
         if ($me !== $owner && $otherId !== $owner) {
             throw new ValidationException('Bu konuşmaya erişiminiz yok', [], 403);
         }
+        // Konuşmayı açınca bana gelen mesajları okundu yap
         $this->messages->markRead($listingId, $me, $otherId);
         return [
             'listing'  => ['id' => $listing['id'], 'title' => $listing['title'], 'status' => $listing['status'],
                            'user_id' => $owner, 'price' => $listing['price'], 'listing_type' => $listing['listing_type'],
                            'cover_image' => $listing['images'][0]['image_url'] ?? null],
+            // afterId: sadece bu id'den sonraki yeni mesajlar (sayfa yenilemeden güncelleme)
             'messages' => $this->messages->conversation($listingId, $me, $otherId, $afterId),
         ];
     }

@@ -2,6 +2,7 @@
 class TradeOfferRepository extends BaseRepository
 {
     /** Teklif + ilan + taraflar: kontrol ve listeleme için ortak SELECT */
+    // Teklifle birlikte ilanın başlığı/durumu, sahibinin ve teklif verenin adı, karşılığında önerilen ilan ve kapak fotoğrafı da gelsin diye tabloları birleştiren ortak sorgu
     private const SELECT = '
         SELECT o.*, l.title AS listing_title, l.user_id AS listing_owner_id, l.status AS listing_status,
                l.listing_type, l.price AS listing_price, l.meeting_point,
@@ -17,6 +18,7 @@ class TradeOfferRepository extends BaseRepository
     /** Yeni takas teklifi kaydeder. */
     public function create(array $d): int
     {
+        // Sadece teklif tablosuna ait alanları al
         $row = array_intersect_key($d, array_flip(['listing_id', 'offerer_id', 'offered_listing_id', 'offered_amount', 'note', 'created_at']));
         $row['created_at'] ??= date('Y-m-d H:i:s');      // zaman PHP'den: sunucu saat dilimi farkı olmasın
         return $this->insert('trade_offers', $row);
@@ -31,7 +33,9 @@ class TradeOfferRepository extends BaseRepository
     /** Bir ilana gelen teklifler (istenirse sadece bir kişinin teklifleri). */
     public function forListing(int $listingId, ?int $onlyOffererId = null): array
     {
+        // Bu ilana gelen teklifler
         $sql = self::SELECT . ' WHERE o.listing_id = ?'; $p = [$listingId];
+        // Sadece belirli kişinin teklifleri istendiyse koşul ekle
         if ($onlyOffererId) { $sql .= ' AND o.offerer_id = ?'; $p[] = $onlyOffererId; }
         return $this->fetchAll($sql . ' ORDER BY o.id DESC', $p);
     }
@@ -39,12 +43,14 @@ class TradeOfferRepository extends BaseRepository
     /** Kullanıcının ilanlarına gelen teklifler */
     public function received(int $userId): array
     {
+        // İlan sahibi bu kullanıcı olan teklifler = bana gelenler
         return $this->fetchAll(self::SELECT . ' WHERE l.user_id = ? ORDER BY o.id DESC LIMIT 100', [$userId]);
     }
 
     /** Kullanıcının verdiği teklifler */
     public function sent(int $userId): array
     {
+        // Teklifi veren bu kullanıcı = benim gönderdiklerim
         return $this->fetchAll(self::SELECT . ' WHERE o.offerer_id = ? ORDER BY o.id DESC LIMIT 100', [$userId]);
     }
 
@@ -69,8 +75,11 @@ class TradeOfferRepository extends BaseRepository
      */
     public function pendingInvolving(array $listingIds, int $exceptOfferId): array
     {
+        // İlan listesi boşsa arama yapma
         if (!$listingIds) return [];
+        // İlan sayısı kadar ? üret: "?,?" (IN (...) içinde kullanılacak)
         $in = implode(',', array_fill(0, count($listingIds), '?'));
+        // Kabul edilen teklif hariç, bu ilanlardan birini isteyen VEYA karşılığında öneren bekleyen teklifler
         return $this->fetchAll(self::SELECT . " WHERE o.status = 'beklemede' AND o.id <> ?
             AND (o.listing_id IN ($in) OR o.offered_listing_id IN ($in))",
             array_merge([$exceptOfferId], $listingIds, $listingIds));
@@ -79,6 +88,7 @@ class TradeOfferRepository extends BaseRepository
     /** Teklifin durumunu ve yanıt zamanını değiştirir. */
     public function setStatus(int $id, string $status, ?string $respondedAt = null): int
     {
+        // Durumu ve ne zaman yanıtlandığını kaydet
         return $this->execute('UPDATE trade_offers SET status = ?, responded_at = ? WHERE id = ?', [$status, $respondedAt, $id]);
     }
 

@@ -6,6 +6,7 @@ class NotificationRepository extends BaseRepository
     public function create(int $userId, string $type, string $content, ?string $link = null): int
     {
         return $this->insert('notifications', [
+            // Bildirim metni en fazla 255 karakter
             'user_id' => $userId, 'type' => $type, 'content' => mb_substr($content, 0, 255), 'link' => $link,
             'created_at' => date('Y-m-d H:i:s'),
         ]);
@@ -14,6 +15,7 @@ class NotificationRepository extends BaseRepository
     /** Kullanıcının son bildirimlerini getirir (istenirse sadece okunmamışları). */
     public function forUser(int $userId, bool $onlyUnread = false, int $limit = 50): array
     {
+        // İstenirse sadece okunmamışlar; en fazla 100 kayıt
         return $this->fetchAll(
             'SELECT id, type, content, link, is_read, created_at FROM notifications WHERE user_id = ?'
             . ($onlyUnread ? ' AND is_read = 0' : '') . ' ORDER BY id DESC LIMIT ' . max(1, min(100, $limit)), [$userId]);

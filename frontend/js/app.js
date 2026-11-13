@@ -6,15 +6,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const latestEl = document.getElementById('latest');
 
   try {
+    // Backend ve veritabanı çalışıyor mu kontrol et
     const h = await apiGet('/health');
     setStatus(apiEl, true, 'API çalışıyor');
     setStatus(dbEl, h.database.ok, h.database.ok ? 'Veritabanı bağlı' : 'Veritabanı: ' + h.database.message);
     if (!h.database.ok) { latestEl.innerHTML = '<p class="muted">Veritabanı bağlı değil.</p>'; return; }
 
+    // Kategorileri ve son 4 ilanı aynı anda getir
     const [c, l] = await Promise.all([apiGet('/categories'), apiGet('/listings', { limit: 4 })]);
+    // Kategorileri tıklanabilir etiket olarak göster
     catEl.innerHTML = c.data.map(k =>
       `<li><a class="chip" href="pages/ilanlar.html?category_id=${k.id}">${esc(k.name)} · ${k.listing_count}</a></li>`).join('');
+    // Son ilanları kart olarak göster
     latestEl.innerHTML = l.items.map(i => listingCard(i)).join('') || '<p class="muted">Henüz ilan yok. migrate.php --seed çalıştırın.</p>';
+  // Backend'e hiç ulaşılamadıysa
   } catch (e) {
     setStatus(apiEl, false, 'API\'ye ulaşılamadı (XAMPP Apache açık mı?)');
     setStatus(dbEl, false, 'Kontrol edilemedi');

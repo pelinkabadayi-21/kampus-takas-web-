@@ -6,6 +6,7 @@ class FavoriteRepository extends BaseRepository
     public function add(int $userId, int $listingId): void
     {
         // Birleşik PK aynı çiftin iki kez eklenmesini engeller; varsa sessizce geç
+        // Zaten favorideyse tekrar ekleme
         if (!$this->exists($userId, $listingId)) {
             $this->insert('favorites', ['user_id' => $userId, 'listing_id' => $listingId]);
         }

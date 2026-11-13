@@ -5,6 +5,7 @@ class AuthTokenRepository extends BaseRepository
     /** Yeni oturum kaydı ekler (token özeti, son kullanma zamanı, tarayıcı bilgisi). */
     public function create(int $userId, string $tokenHash, string $expiresAt, ?string $userAgent): int
     {
+        // Token'ın kendisi değil SHA-256 özeti saklanır; tarayıcı bilgisi 255 karaktere kısaltılır
         return $this->insert('auth_tokens', [
             'user_id' => $userId, 'token_hash' => $tokenHash,
             'expires_at' => $expiresAt, 'user_agent' => $userAgent ? mb_substr($userAgent, 0, 255) : null,
@@ -14,6 +15,7 @@ class AuthTokenRepository extends BaseRepository
     /** Süresi dolmamış token'ı ve sahibini getirir. */
     public function findValid(string $tokenHash, string $now): ?array
     {
+        // Özeti eşleşen ve süresi dolmamış token'ın kullanıcısını getir
         return $this->fetchOne(
             'SELECT t.id AS token_id, t.expires_at, u.id, u.full_name, u.email, u.role, u.is_verified, u.department
              FROM auth_tokens t JOIN users u ON u.id = t.user_id

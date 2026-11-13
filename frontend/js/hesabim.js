@@ -1,8 +1,10 @@
 // Korumalı sayfa: giriş yapmayan kullanıcı giriş sayfasına yönlendirilir.
 document.addEventListener('DOMContentLoaded', async () => {
   let u;
+  // Giriş yoksa giriş sayfasına yönlendirilir
   try { u = await requireLogin(); } catch (e) { return; }
 
+  // Profil bilgilerini göster
   document.getElementById('profile').innerHTML = `
     <h2>${esc(u.full_name)} ${u.is_verified == 1 ? '<span class="badge badge-bagis">✅ Doğrulanmış öğrenci</span>' : '<span class="badge">Doğrulanmamış</span>'}</h2>
     <table class="facts">
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Aldığım değerlendirmeler
   try {
+    // Aldığım değerlendirmeleri getir ve listele
     const { data } = await apiGet(`/users/${u.id}/reviews`);
     document.getElementById('reviews').innerHTML =
       `<p>${starsText(data.summary.average, data.summary.total)}</p>` +
@@ -27,11 +30,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const grid = document.getElementById('my-listings');
   const info = document.getElementById('limit-info');
   try {
+    // Kendi ilanlarımı ve ilan sınırlarını aynı anda getir
     const [r, o] = await Promise.all([apiGet('/me/listings'), apiGet('/listings/options')]);
+    // Kaç aktif ilanım var, sınırım kaç (doğrulanmışsa daha fazla)
     const active = r.items.filter(i => i.status === 'aktif').length;
     const limit = u.role === 'yonetici' ? null : (u.is_verified == 1 ? o.data.limits.verified : o.data.limits.unverified);
     info.innerHTML = limit === null ? '' :
       `${active} / ${limit} aktif ilan` + (u.is_verified == 1 ? '' : ` · <span title="Okul e-postasıyla kayıt olan ya da yönetici tarafından doğrulanan hesaplar ${o.data.limits.verified} ilana kadar açabilir">Doğrulanınca ${o.data.limits.verified}</span>`);
+    // İlanları durumlarıyla birlikte kart olarak göster
     grid.innerHTML = r.items.map(i => listingCard(i, { showStatus: true })).join('')
       || '<p class="muted">Henüz ilanınız yok. <a href="ilan-ver.html">İlk ilanınızı verin →</a></p>';
   } catch (e) {

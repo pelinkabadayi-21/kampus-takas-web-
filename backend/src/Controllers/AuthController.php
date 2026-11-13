@@ -8,6 +8,7 @@ class AuthController
     // POST /api/auth/register
     public function register(): void
     {
+        // Formdan gelen JSON'u servise ver; kurallar serviste kontrol edilir
         $user = $this->auth->register(Request::json());
         Response::json(['success' => true, 'message' => 'Kayıt başarılı, giriş yapabilirsiniz', 'user' => $user], 201);
     }
@@ -16,8 +17,10 @@ class AuthController
     public function login(): void
     {
         $d = Request::json();
+        // E-posta + parola doğruysa servis bir token ve kullanıcı bilgisi döndürür
         [$token, $user] = $this->auth->login((string) ($d['email'] ?? ''), (string) ($d['password'] ?? ''),
                                              $_SERVER['HTTP_USER_AGENT'] ?? null);
+        // Token'ı HttpOnly çereze yaz (8 saat geçerli)
         $this->setCookie($token, time() + 3600 * (int) $this->cfg['token_ttl_hours']);
 
         // Token yanıtta da döner: Postman gibi araçlarla "Authorization: Bearer" ile test edilebilsin.
@@ -29,6 +32,7 @@ class AuthController
     // POST /api/auth/logout
     public function logout(): void
     {
+        // Token'ı veritabanından sil, çerezi geçmiş tarihle sıfırla
         $this->auth->logout(Auth::token($this->cfg['cookie_name']));
         $this->setCookie('', time() - 3600);
         Response::json(['success' => true, 'message' => 'Çıkış yapıldı']);
@@ -37,6 +41,7 @@ class AuthController
     // GET /api/auth/me
     public function me(): void
     {
+        // Giriş yapmış kullanıcının bilgilerini döndür (giriş yoksa 401)
         Response::json(['success' => true, 'user' => Auth::requireUser()]);
     }
 

@@ -2,22 +2,27 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const box = document.getElementById('detail');
   const params = new URLSearchParams(location.search);
+  // Adresteki ?id= değerinden hangi ilanın açılacağını al
   const id = params.get('id');
   if (!id) { box.innerHTML = '<p class="error-box">İlan seçilmedi.</p>'; return; }
 
   const notice = document.getElementById('notice');
+  // Yeni ilan / güncelleme sonrası bilgi mesajları
   if (params.get('yeni')) notice.innerHTML = '<p class="success-box">🎉 İlanınız yayında!</p>';
   if (params.get('guncellendi')) notice.innerHTML = '<p class="success-box">✔ İlan güncellendi.</p>';
+  // Önceki sayfadan kalan hata mesajı varsa bir kez göster
   const flash = sessionStorage.getItem('flash');
   if (flash) { notice.innerHTML += `<p class="error-box">${esc(flash)}</p>`; sessionStorage.removeItem('flash'); }
 
   let l;
+  // İlan detayını sunucudan getir
   try { l = (await apiGet('/listings/' + encodeURIComponent(id))).data; }
   catch (e) { box.innerHTML = `<p class="error-box">${esc(e.message)}</p>`; return; }
 
   document.title = l.title + ' – Kampüs Takas';
   const imgs = l.images;
   const me = await currentUser();
+  // Bu ilan benim mi
   const isOwner = me && me.id == l.user_id;
 
   box.innerHTML = `
@@ -46,14 +51,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     </div>`;
 
   // Galeri: küçük resme tıklayınca büyük resmi değiştir
+  // Küçük resme tıklanınca büyük resmi değiştir
   box.querySelectorAll('.thumb').forEach(t => t.addEventListener('click', () => {
     document.querySelector('#main-photo img').src = t.dataset.src;
     box.querySelectorAll('.thumb').forEach(x => x.classList.toggle('active', x === t));
   }));
 
   const actions = document.getElementById('actions');
+  // İlan sahibi (veya yönetici): düzenle, yayından kaldır, sil butonları
   if (l.can_edit) {
     // Butonlar görünüm içindir; yetki kontrolü sunucuda tekrar yapılır
+    // Rezerve/tamamlanmış ilan yayından kaldırılamaz
     const canToggle = l.status === 'aktif' || l.status === 'kaldirildi';
     actions.innerHTML = `
       <a class="btn" href="ilan-ver.html?id=${l.id}">✏️ Düzenle</a>
@@ -61,16 +69,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       <button class="btn btn-danger" id="delete">🗑 Sil</button>
       ${!isOwner ? '<small class="muted" style="width:100%">🛡️ Yönetici olarak görüntülüyorsunuz</small>' : ''}`;
     document.getElementById('toggle')?.addEventListener('click', async () => {
+      // Durumu aktif ↔ kaldırıldı arasında değiştir
       try { await apiPut('/listings/' + l.id, { status: l.status === 'aktif' ? 'kaldirildi' : 'aktif' }); location.reload(); }
       catch (e) { notice.innerHTML = `<p class="error-box">${esc(e.message)}</p>`; }
     });
     document.getElementById('delete').addEventListener('click', async () => {
+      // Silmeden önce onay iste
       if (!confirm('İlan ve fotoğrafları kalıcı olarak silinecek. Emin misiniz?')) return;
       try { await apiDelete('/listings/' + l.id); location.href = 'hesabim.html'; }
       catch (e) { notice.innerHTML = `<p class="error-box">${esc(e.message)}</p>`; }
     });
+  // Giriş yapmamışsa mesaj için giriş sayfasına yönlendiren buton
   } else if (!me) {
     actions.innerHTML = `<a class="btn" href="giris.html?next=${encodeURIComponent(location.pathname + location.search)}">Mesaj ve teklif için giriş yapın</a>`;
+  // Başka birinin ilanı: mesaj gönder ve teklif ver butonları
   } else {
     actions.innerHTML = `
       <a class="btn" href="mesajlar.html?ilan=${l.id}&kisi=${l.user_id}">💬 Mesaj gönder</a>
@@ -79,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Teklifler: ilan sahibi gelen tüm teklifleri, diğerleri kendi tekliflerini görür
+  // Giriş yaptıysa bu ilana ait teklifleri yükle
   if (me) loadOffers(l, me);
 });
 
@@ -86,17 +99,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadOffers(l, me) {
   const box = document.getElementById('offers-box');
   try {
+    // İlana gelen (veya benim verdiğim) teklifleri getir
     const { data } = await apiGet(`/listings/${l.id}/offers`);
     if (!data.length) { box.hidden = true; return; }
     box.hidden = false;
     box.innerHTML = `<h2>${l.can_edit ? `Gelen teklifler (${data.length})` : 'Bu ilana verdiğiniz teklifler'}</h2>`
       + data.map(o => offerCard(o, me, { showListing: false })).join('');
+    // Buton olaylarını sadece bir kez bağla
     if (!box.dataset.bound) {
       box.dataset.bound = 1;
       bindOfferActions(box, () => location.reload(),
         err => document.getElementById('notice').innerHTML = `<p class="error-box">${esc(err.message)}</p>`);
     }
     // Bekleyen teklifi varsa tekrar teklif butonunu gizle (iş kuralı T2'nin arayüz tarafı)
+    // Bekleyen teklifim varsa tekrar teklif butonunu kaldır (T2)
     if (!l.can_edit && data.some(o => o.stage === 'beklemede')) document.getElementById('offer-open')?.remove();
   } catch (e) { box.hidden = true; }
 }
@@ -106,6 +122,7 @@ async function openOfferForm(l) {
   const panel = document.getElementById('offer-form');
   const type = l.listing_type;
   let mine = [];
+  // Takas ilanında karşılığında önerebileceğim kendi aktif ilanlarımı getir
   if (type === 'takas') {
     try { mine = (await apiGet('/me/listings')).items.filter(i => i.status === 'aktif'); } catch (e) {}
   }
@@ -140,20 +157,24 @@ async function openOfferForm(l) {
         <button class="btn btn-outline" type="button" id="offer-close">Vazgeç</button>
       </div>
     </form>`;
+  // Teklif formunu ekrana kaydır
   panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
   document.getElementById('offer-close').addEventListener('click', () => panel.hidden = true);
   const form = document.getElementById('offer');
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form));
+    // Formdaki verilere ilan numarasını ekle
     data.listing_id = l.id;
     form.querySelector('button[type=submit]').disabled = true;
     try {
+      // Teklifi gönder; başarılıysa teklif listesini yenile
       await apiPost('/offers', data);
       panel.innerHTML = '<p class="success-box">✔ Teklifiniz gönderildi. İlan sahibi yanıt verince bildirim alacaksınız.</p>';
       loadOffers(l, await currentUser());
       document.getElementById('offer-open')?.remove();
     } catch (err) {
+      // Hata varsa ilgili alanların altında göster
       showFieldErrors(form, err.errors);
       if (!Object.keys(err.errors || {}).length) form.insertAdjacentHTML('afterbegin', `<p class="error-box">${esc(err.message)}</p>`);
       form.querySelector('button[type=submit]').disabled = false;

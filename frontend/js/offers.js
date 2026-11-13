@@ -1,5 +1,6 @@
 // Teklif kartı ve işlemleri: hem ilan sayfası hem teklifler sayfası kullanır.
 
+// Teklif aşamalarının ekranda görünen adı ve rengi
 const STAGE_LABEL = {
   beklemede:  ['⏳ Yanıt bekliyor', 'badge-status-rezerve'],
   kabul:      ['🤝 Kabul edildi · buluşma bekleniyor', 'badge-takas'],
@@ -11,6 +12,7 @@ const STAGE_LABEL = {
 // Teklifin içeriğini yazar: "🔄 kitap + 💰 50 ₺" gibi.
 function offerSummary(o) {
   const parts = [];
+  // Teklifte ne var: önerilen ilan, tutar veya bağış talebi
   if (o.offered_listing_id) parts.push(`🔄 <a href="ilan.html?id=${o.offered_listing_id}">${esc(o.offered_listing_title)}</a>`);
   if (o.offered_amount != null) parts.push(`💰 ${money(o.offered_amount)}`);
   if (!parts.length) parts.push(o.listing_type === 'bagis' ? '🎁 Bağış talebi' : '—');
@@ -23,16 +25,19 @@ function offerSummary(o) {
  * @param showListing ilan başlığını da göster (teklifler sayfasında)
  */
 function offerCard(o, me, { showListing = true } = {}) {
+  // Ben ilan sahibi miyim; karşı taraf kim
   const iAmOwner = me.id == o.listing_owner_id;
   const other = iAmOwner ? { id: o.offerer_id, name: o.offerer_name } : { id: o.listing_owner_id, name: o.owner_name };
   const [label, cls] = STAGE_LABEL[o.stage] || [o.stage, ''];
   // Teklif işlemi için buton HTML'i üretir.
   const btn = (action, text, style = 'btn-outline') => `<button class="btn btn-sm ${style}" data-offer="${o.id}" data-action="${action}">${text}</button>`;
 
+  // Aşamaya ve role göre hangi butonlar görünecek
   let actions = '';
   if (o.stage === 'beklemede' && iAmOwner) actions = btn('accept', '✔ Kabul et', '') + btn('reject', '✖ Reddet', 'btn-danger');
   if (o.stage === 'beklemede' && !iAmOwner) actions = btn('cancel', '↩ Geri çek', 'btn-danger');
   if (o.stage === 'kabul') actions = btn('complete', '✅ Takas tamamlandı', '') + btn('withdraw', 'Vazgeç', 'btn-danger');
+  // Tamamlanınca: değerlendirmediysem "Değerlendir" butonu
   if (o.stage === 'tamamlandi') actions += o.i_reviewed
     ? '<span class="muted">✔ Değerlendirdiniz</span>'
     : `<button class="btn btn-sm" data-review="${o.id}" data-name="${esc(other.name)}">⭐ Değerlendir</button>`;
@@ -52,6 +57,7 @@ function offerCard(o, me, { showListing = true } = {}) {
     </div>`;
 }
 
+// Her işlemden önce sorulacak onay mesajları
 const CONFIRM = {
   accept:   'Teklifi kabul ederseniz ilan(lar) rezerve olur ve bu ilana gelen diğer bekleyen teklifler kapanır. Onaylıyor musunuz?',
   reject:   'Teklif reddedilsin mi?',
@@ -63,9 +69,11 @@ const CONFIRM = {
 /** Kapsayıcıdaki teklif butonlarını bağlar; işlem sonrası onDone çağrılır. */
 function bindOfferActions(container, onDone, onError) {
   container.addEventListener('click', async e => {
+    // Teklif butonuna basılınca onay al, sunucuya gönder
     const b = e.target.closest('button[data-action]');
     if (!b || !confirm(CONFIRM[b.dataset.action])) return;
     b.disabled = true;
+    // Örn: PUT /offers/5/accept
     try { await apiPut(`/offers/${b.dataset.offer}/${b.dataset.action}`); onDone(); }
     catch (err) { b.disabled = false; onError(err); }
   });
@@ -77,6 +85,7 @@ function bindReviewActions(container, onDone, onError) {
     const b = e.target.closest('button[data-review]');
     if (!b) return;
     const box = b.closest('.offer-actions');
+    // Form zaten açıksa tekrar açma
     if (box.querySelector('.review-form')) return;
     box.insertAdjacentHTML('afterend', `
       <form class="review-form">
@@ -90,6 +99,7 @@ function bindReviewActions(container, onDone, onError) {
     const form = box.nextElementSibling;
     let rating = 0;
     const stars = form.querySelectorAll('.star-input button');
+    // Yıldızları seçilen puana kadar boya
     const paint = v => stars.forEach(s => s.classList.toggle('on', +s.dataset.v <= v));
     stars.forEach(s => {
       s.addEventListener('click', () => { rating = +s.dataset.v; paint(rating); });
@@ -98,7 +108,9 @@ function bindReviewActions(container, onDone, onError) {
     form.querySelector('.star-input').addEventListener('mouseleave', () => paint(rating));
     form.addEventListener('submit', async ev => {
       ev.preventDefault();
+      // Yıldız seçilmeden gönderilemez
       if (!rating) { onError(new Error('Önce yıldız seçin')); return; }
+      // Değerlendirmeyi gönder
       try { await apiPost('/reviews', { trade_offer_id: +b.dataset.review, rating, comment: form.elements.comment.value }); onDone(); }
       catch (err) { onError(err); }
     });
@@ -108,6 +120,7 @@ function bindReviewActions(container, onDone, onError) {
 // Puanı yıldızlarla gösterir: ★★★★☆ 4.2 (5)
 function starsText(avg, count) {
   if (avg == null) return '<span class="muted">Henüz değerlendirme yok</span>';
+  // Ortalama puanı yuvarlayıp dolu/boş yıldız olarak göster
   const full = Math.round(avg);
   return `<span class="stars">${'★'.repeat(full)}${'☆'.repeat(5 - full)}</span> <b>${avg}</b> <small class="muted">(${count})</small>`;
 }

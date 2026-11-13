@@ -5,6 +5,7 @@ class MessageRepository extends BaseRepository
     /** Yeni mesaj kaydeder. */
     public function create(int $listingId, int $senderId, int $receiverId, string $body, ?string $createdAt = null): int
     {
+        // Mesaj kaydı: hangi ilan, kim gönderdi, kime, ne yazdı
         $row = ['listing_id' => $listingId, 'sender_id' => $senderId, 'receiver_id' => $receiverId, 'body' => $body];
         if ($createdAt) $row['created_at'] = $createdAt;     // zaman PHP'den: sunucu saat dilimi farkı olmasın
         return $this->insert('messages', $row);
@@ -17,6 +18,7 @@ class MessageRepository extends BaseRepository
     }
 
     /** İki kullanıcı arasındaki, bir ilana ait konuşma (her iki yön). */
+    // İki yönlü konuşma: A->B ve B->A mesajları; $afterId verilirse sadece ondan sonraki yeni mesajlar
     public function conversation(int $listingId, int $userA, int $userB, int $afterId = 0): array
     {
         return $this->fetchAll(
@@ -38,6 +40,7 @@ class MessageRepository extends BaseRepository
     /**
      * Gelen kutusu: her (ilan, karşı kişi) çifti için tek satır; son mesaj ve okunmamış sayısı.
      */
+    // İç sorgu: kullanıcının mesajlarını (ilan, karşı kişi) çiftine göre gruplar; her grup için son mesaj id'si ve okunmamış sayısı. Dış sorgu: son mesajın metnini, ilan başlığını ve karşı kişinin adını ekler
     public function inbox(int $userId): array
     {
         return $this->fetchAll(
@@ -77,6 +80,7 @@ class MessageRepository extends BaseRepository
     /** Son X saniyede gönderilen mesaj sayısı (flood koruması) */
     public function sentSince(int $userId, string $since): int
     {
+        // Verilen zamandan beri kaç mesaj gönderilmiş (dakikada 10 mesaj sınırı için)
         return (int) $this->fetchOne('SELECT COUNT(*) AS n FROM messages WHERE sender_id = ? AND created_at >= ?', [$userId, $since])['n'];
     }
 

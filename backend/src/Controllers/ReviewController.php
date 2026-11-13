@@ -10,6 +10,7 @@ class ReviewController
     {
         $u = Auth::requireUser();
         $d = Request::json();
+        // Hangi takas, kaç yıldız, yorum: kurallar serviste kontrol edilir
         $id = $this->service->create((int) ($d['trade_offer_id'] ?? 0), (int) $u['id'], (int) ($d['rating'] ?? 0), $d['comment'] ?? null);
         Response::json(['success' => true, 'id' => $id], 201);
     }
@@ -17,6 +18,7 @@ class ReviewController
     // GET /api/users/{id}/reviews   (herkese açık)
     public function forUser(int $userId): void
     {
+        // Bir kullanıcının aldığı puanlar ve yorumlar
         Response::json(['success' => true, 'data' => $this->service->forUser($userId)]);
     }
 }

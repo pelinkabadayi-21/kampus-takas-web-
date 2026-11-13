@@ -1,5 +1,6 @@
 // Yönetim sayfası. Sadece "yonetici" rolü veri alabilir: sunucu diğerlerine 403 döner.
 document.addEventListener('DOMContentLoaded', async () => {
+  // Giriş zorunlu (yetki kontrolünü sunucu yapar)
   try { await requireLogin(); } catch (e) { return; }
   const box = document.getElementById('admin');
   const me = await currentUser();
@@ -7,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Kullanıcı listesini sunucudan alıp tablo olarak çizer; yetki yoksa uyarı gösterir.
   async function load() {
     try {
+      // Tüm kullanıcıları getir ve tablo olarak göster
       const { data } = await apiGet('/admin/users');
       box.innerHTML = `
         <p class="muted">${data.length} kullanıcı</p>
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </tr>`).join('')}</tbody>
         </table></div>`;
     } catch (e) {
+      // Sunucu 403 döndürdüyse "yetkiniz yok" mesajı
       box.innerHTML = e.status === 403
         ? '<p class="error-box">⛔ Bu sayfaya erişim yetkiniz yok. Yönetim paneli sadece yöneticilere açıktır.</p>'
         : `<p class="error-box">${esc(e.message)}</p>`;
@@ -35,10 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   box.addEventListener('change', async e => {
     const el = e.target;
     try {
+      // Rol veya doğrulama kutusu değişince hemen sunucuya kaydet
       if (el.dataset.role)   await apiPut(`/admin/users/${el.dataset.role}/role`, { role: el.value });
       if (el.dataset.verify) await apiPut(`/admin/users/${el.dataset.verify}/verify`, { is_verified: el.checked });
       flash('Kaydedildi ✔');
     } catch (err) {
+      // Hata olursa mesaj göster ve tabloyu eski haline getir
       flash(err.message, true);
       load();
     }
@@ -49,6 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const f = document.getElementById('flash');
     f.className = isError ? 'error-box' : 'success-box';
     f.textContent = text; f.hidden = false;
+    // Mesajı 2,5 saniye sonra gizle
     clearTimeout(flash.t); flash.t = setTimeout(() => f.hidden = true, 2500);
   }
   load();

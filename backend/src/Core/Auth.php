@@ -6,6 +6,7 @@
  */
 class Auth
 {
+    // Bu istekte giriş yapmış kullanıcı (bir kez bulunur, sonra hatırlanır)
     private static ?array $user = null;
     private static bool $resolved = false;
     private static ?Closure $resolver = null;
@@ -16,7 +17,9 @@ class Auth
     /** Token önce HttpOnly çerezden, yoksa "Authorization: Bearer ..." başlığından okunur. */
     public static function token(string $cookieName = 'kt_token'): ?string
     {
+        // Önce tarayıcının gönderdiği HttpOnly çereze bak
         if (!empty($_COOKIE[$cookieName])) return $_COOKIE[$cookieName];
+        // Çerez yoksa "Authorization: Bearer <token>" başlığına bak (Postman gibi araçlar için)
         $h = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
         return preg_match('/^Bearer\s+(\S+)$/i', $h, $m) ? $m[1] : null;
     }
@@ -24,8 +27,10 @@ class Auth
     /** Giriş yapmış kullanıcı ya da null */
     public static function user(): ?array
     {
+        // Kullanıcıyı sadece ilk sorulduğunda veritabanından bul
         if (!self::$resolved) {
             self::$resolved = true;
+            // index.php'nin verdiği fonksiyonla token'dan kullanıcıyı bul
             self::$user = self::$resolver ? (self::$resolver)() : null;
         }
         return self::$user;
@@ -34,13 +39,16 @@ class Auth
     /** Giriş zorunlu: yoksa 401 */
     public static function requireUser(): array
     {
+        // Giriş yoksa 401 hatası
         return self::user() ?? throw new ValidationException('Bu işlem için giriş yapmalısınız', [], 401);
     }
 
     /** Belirli rol zorunlu: giriş yoksa 401, rol yetmiyorsa 403 */
     public static function requireRole(string ...$roles): array
     {
+        // Önce giriş yapılmış mı kontrol et
         $u = self::requireUser();
+        // Kullanıcının rolü izin verilen roller arasında değilse 403
         if (!in_array($u['role'], $roles, true)) {
             throw new ValidationException('Bu sayfaya erişim yetkiniz yok', [], 403);
         }
@@ -50,6 +58,7 @@ class Auth
     /** Kullanıcı yönetici mi? (role = yonetici) */
     public static function isAdmin(?array $u = null): bool
     {
+        // Kullanıcı verilmediyse giriş yapmış kişiyi kullan
         $u ??= self::user();
         return ($u['role'] ?? null) === 'yonetici';
     }

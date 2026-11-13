@@ -5,6 +5,7 @@
  */
 declare(strict_types=1);
 
+// Ayar dosyasını yükle; config.php yoksa örnek ayarları kullan
 $configFile = __DIR__ . '/../config/config.php';
 if (!file_exists($configFile)) $configFile = __DIR__ . '/../config/config.example.php';
 $config = require $configFile;
@@ -13,37 +14,46 @@ $config['auth'] = ($config['auth'] ?? []) + [               // eski config.php'l
     'max_failed_logins' => 5, 'lock_minutes' => 15, 'student_email_domains' => [],
 ];
 
+// Tarihler Türkiye saatine göre
 date_default_timezone_set('Europe/Istanbul');
 
 // Güvenlik başlıkları
+// Güvenlik başlıkları: tarayıcı dosya türünü tahmin etmesin, site iframe içine alınmasın
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 
 // CORS: Frontend ve API aynı adreste (localhost) çalıştığı için çerezler sorunsuz gider.
+// CORS: frontend'in API'ye istek atmasına izin ver
 header('Access-Control-Allow-Origin: ' . $config['app']['allowed_origin']);
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+// Tarayıcının ön kontrol (OPTIONS) isteğine boş cevap ver
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
+// Tüm sınıfları otomatik yükleyen dosya
 require __DIR__ . '/../src/bootstrap.php';
 
 // Veritabanı bağlantısını sadece ihtiyaç olunca aç
+// Veritabanı bağlantısı sadece gerektiğinde açılır
 $db = function () use ($config): PDO {
     try {
         return Database::connect($config['db']);
     } catch (Throwable $e) {
+        // Bağlantı kurulamazsa kullanıcıya anlaşılır bir hata ver
         Response::error('Veritabanına bağlanılamadı. XAMPP MySQL açık mı, migrate.php çalıştırıldı mı?', 500);
     }
 };
 $authService = fn() => new AuthService(new UserRepository($db()), new AuthTokenRepository($db()), $config['auth']);
 
 // Her istekte: token varsa kullanıcıyı bul (sadece gerektiğinde)
+// Her istekte çerezdeki token'dan giriş yapan kullanıcıyı bul
 Auth::setResolver(function () use ($authService, $config) {
     $token = Auth::token($config['auth']['cookie_name']);
     return $token ? $authService()->userFromToken($token) : null;
 });
 
+// Controller'ları ihtiyaç olunca oluşturan küçük fabrikalar (repository → service → controller)
 $listingController = function () use ($db) {
     $repo   = new ListingRepository($db());
     $images = new ImageService($repo, __DIR__ . '/uploads/listings');
@@ -60,17 +70,21 @@ $notificationController = fn() => new NotificationController(new NotificationRep
 
 // Bildirim kancası: mesaj/teklif olaylarını dinleyip bildirim yazar (DB'ye sadece olay olunca bağlanır)
 $listenersRegistered = false;
+// Bildirim dinleyicilerini sadece bir kez kaydet
 $registerListeners = function () use (&$listenersRegistered, $db) {
     if (!$listenersRegistered) { NotificationListeners::register(new NotificationRepository($db())); $listenersRegistered = true; }
 };
 $adminController = fn() => new AdminController(new UserRepository($db()));
 
+// Adres (URL) → fonksiyon eşleştirmeleri
 $router = new Router();
 
 // --- Sistem ---
+// Sağlık kontrolü
 $router->get('/api/health', fn() => (new HealthController($config))->index());
 
 // --- Kimlik doğrulama ---
+// Kayıt, giriş, çıkış
 $router->post('/api/auth/register', fn() => $authController()->register());
 $router->post('/api/auth/login',    fn() => $authController()->login());
 $router->post('/api/auth/logout',   fn() => $authController()->logout());
@@ -80,6 +94,7 @@ $router->get('/api/auth/me',        fn() => $authController()->me());
 $router->get('/api/categories', fn() => (new CategoryController(new CategoryService(new CategoryRepository($db()))))->index());
 
 // --- İlanlar (okuma herkese açık, yazma giriş gerektirir) ---
+// İlan listesi, detay, ekleme, güncelleme, silme
 $router->get('/api/listings',          fn()        => $listingController()->index());
 $router->get('/api/listings/options',  fn()        => $listingController()->options());
 $router->get('/api/me/listings',       fn()        => $listingController()->mine());
@@ -103,6 +118,7 @@ $router->get('/api/offers',                            fn()                => $o
 $router->get('/api/listings/{id}/offers',              fn(int $id)         => $offerController()->forListing($id));
 $router->post('/api/offers',                           function () use ($registerListeners, $offerController) { $registerListeners(); $offerController()->store(); });
 $router->put('/api/offers/{id}/{action}',              function (int $id, string $action) use ($registerListeners, $offerController) {
+    // Sadece bilinen işlemlere izin ver
     if (!in_array($action, ['accept', 'reject', 'cancel', 'complete', 'withdraw'], true)) Response::error('Geçersiz işlem', 404);
     $registerListeners(); $offerController()->action($id, $action);
 });
@@ -118,6 +134,7 @@ $router->put('/api/notifications/read-all',            fn()                => $n
 $router->put('/api/notifications/{id}/read',           fn(int $id)         => $notificationController()->read($id));
 
 // --- Yönetim (sadece "yonetici" rolü) ---
+// Yönetici işlemleri
 $router->get('/api/admin/users',              fn()        => $adminController()->users());
 $router->put('/api/admin/users/{id}/role',    fn(int $id) => $adminController()->setRole($id));
 $router->put('/api/admin/users/{id}/verify',  fn(int $id) => $adminController()->setVerified($id));
@@ -125,9 +142,12 @@ $router->get('/api/admin/stats',              fn()        => $adminController()-
 
 // Hataları tek yerden JSON'a çevir
 try {
+    // Gelen isteği uygun fonksiyona yönlendir
     $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+// Kural hatası: alan hatalarıyla birlikte 400/403/404 döndür
 } catch (ValidationException $e) {
     Response::json(['success' => false, 'error' => $e->getMessage(), 'errors' => $e->errors], $e->getCode());
 } catch (Throwable $e) {
+    // Beklenmeyen hata: ayrıntıyı gizleyip 500 döndür
     Response::error($config['app']['debug'] ? $e->getMessage() : 'Sunucu hatası', 500);
 }

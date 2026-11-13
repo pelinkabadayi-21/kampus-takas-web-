@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const threadsEl = document.getElementById('threads');
   const threadEl = document.getElementById('thread');
   const chat = document.getElementById('chat');
+  // Açık olan konuşma ve yeni mesajları kontrol eden zamanlayıcı
   let current = null;      // { listingId, otherId, lastId }
   let threads = [];
   let poll;
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Konuşma listesini sunucudan alır.
   async function loadInbox() {
     try {
+      // Gelen kutusunu (konuşma listesini) getir
       threads = (await apiGet('/messages')).data;
       drawInbox();
     } catch (e) { threadsEl.innerHTML = `<p class="error-box">${esc(e.message)}</p>`; }
@@ -34,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   threadsEl.addEventListener('click', e => {
+    // Bir konuşmaya tıklanınca sayfayı yenilemeden aç
     const a = e.target.closest('.thread-item'); if (!a) return;
     e.preventDefault();
     history.pushState(null, '', a.getAttribute('href'));
@@ -42,16 +45,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Seçilen konuşmayı açar: mesajları gösterir, mesaj yazma kutusunu bağlar, 8 sn'de bir yeni mesaj kontrolü başlatır.
   async function open(listingId, otherId) {
+    // Önceki konuşmanın zamanlayıcısını durdur
     clearInterval(poll);
     current = { listingId, otherId, lastId: 0 };
     chat.classList.add('show-thread');            // mobilde sohbet panelini göster
     threadEl.innerHTML = '<p class="muted" style="padding:20px">Yükleniyor…</p>';
     let r;
+    // Konuşmanın mesajlarını ve ilan bilgisini getir
     try { r = await apiGet(`/messages/${listingId}/${otherId}`); }
     catch (e) { threadEl.innerHTML = `<p class="error-box" style="margin:16px">${esc(e.message)}</p>`; return; }
 
     const l = r.listing;
     const t = threads.find(x => x.listing_id == listingId && x.other_id == otherId);
+    // Karşı tarafın adı
     const otherName = t ? t.other_name : (l.user_id == otherId ? 'İlan sahibi' : 'Kullanıcı');
     threadEl.innerHTML = `
       <header class="thread-head">
@@ -67,11 +73,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       </form>
       <small class="composer-error" id="send-error"></small>`;
     document.getElementById('back').addEventListener('click', () => chat.classList.remove('show-thread'));
+    // Mesajları ekrana yaz
     appendMessages(r.messages);
     if (!r.messages.length) document.getElementById('messages').innerHTML = '<p class="muted center">Henüz mesaj yok. İlk mesajı siz yazın 👋</p>';
 
     const form = document.getElementById('composer');
     const ta = form.elements.body;
+    // Enter gönderir, Shift+Enter yeni satır
     ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
     ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; });
     form.addEventListener('submit', async e => {
@@ -80,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const err = document.getElementById('send-error'); err.textContent = '';
       form.querySelector('button').disabled = true;
       try {
+        // Mesajı gönder, kutuyu temizle, yeni mesajları ve gelen kutusunu yenile
         await apiPost('/messages', { listing_id: listingId, receiver_id: otherId, body });
         ta.value = ''; ta.style.height = 'auto';
         await fetchNew(); loadInbox();
@@ -88,6 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     ta.focus();
     drawInbox(); refreshCounts();
+    // Her 8 saniyede yeni mesaj var mı kontrol et (sekme açıksa)
     poll = setInterval(() => { if (!document.hidden) { fetchNew(); loadInbox(); } }, 8000);
   }
 
@@ -95,12 +105,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   function appendMessages(list) {
     const box = document.getElementById('messages');
     if (!box || !list.length) return;
+    // "Henüz mesaj yok" yazısını kaldır
     if (box.querySelector('.center')) box.innerHTML = '';
     box.insertAdjacentHTML('beforeend', list.map(m => `
       <div class="msg ${m.sender_id == me.id ? 'mine' : 'theirs'}">
         <div class="bubble">${esc(m.body)}</div>
         <small>${timeAgo(m.created_at)}${m.sender_id == me.id && m.is_read == 1 ? ' · ✓✓' : ''}</small>
       </div>`).join(''));
+    // Son mesajın id'sini sakla, en alta kaydır
     current.lastId = list[list.length - 1].id;
     box.scrollTop = box.scrollHeight;
   }
@@ -108,10 +120,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Sadece son mesajdan sonra gelen yeni mesajları çeker.
   async function fetchNew() {
     if (!current) return;
+    // Sadece son id'den sonraki yeni mesajları getir
     try { appendMessages((await apiGet(`/messages/${current.listingId}/${current.otherId}`, { after: current.lastId })).messages); }
     catch (e) {}
   }
 
+  // Tarayıcının geri tuşuyla konuşmalar arasında gezin
   window.addEventListener('popstate', () => {
     const p = new URLSearchParams(location.search);
     if (p.get('ilan')) open(+p.get('ilan'), +p.get('kisi')); else chat.classList.remove('show-thread');
@@ -119,5 +133,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadInbox();
   const p = new URLSearchParams(location.search);
+  // Adreste konuşma bilgisi varsa (bildirimden gelindiyse) onu aç
   if (p.get('ilan') && p.get('kisi')) open(+p.get('ilan'), +p.get('kisi'));
 });

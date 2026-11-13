@@ -8,6 +8,7 @@ class CategoryController
     /** GET /api/categories - Tüm kategorileri (ilan sayılarıyla) JSON olarak döndürür. */
     public function index(): void
     {
+        // Tüm kategorileri ilan sayılarıyla döndür
         Response::json(['success' => true, 'data' => $this->service->list()]);
     }
 }

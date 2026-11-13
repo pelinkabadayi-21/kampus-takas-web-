@@ -16,12 +16,14 @@ class Events
     /** Bir olayı dinleyecek fonksiyonu kaydeder (ör. "offer.accepted" olunca bildirim yaz). */
     public static function on(string $event, callable $listener): void
     {
+        // Dinleyiciyi o olayın listesine ekle
         self::$listeners[$event][] = $listener;
     }
 
     /** Olayı duyurur: o olayı dinleyen bütün fonksiyonları sırayla çalıştırır. */
     public static function emit(string $event, array $payload = []): void
     {
+        // Olayı dinleyen her fonksiyonu olay bilgisiyle çalıştır
         foreach (self::$listeners[$event] ?? [] as $listener) {
             $listener($payload);
         }
