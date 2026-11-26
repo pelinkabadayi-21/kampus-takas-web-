@@ -150,7 +150,12 @@ Render paneli → servis → **Environment** → `CLOUDINARY_URL`, `BREVO_API_KE
   - **Brevo:** istek biçimi; anahtar ve e-posta adresinin günlüğe yazılmadığı.
   - **E-posta kuralları:** E1–E5.
   - **Ortam değişkenleri:** `.env` okuma; kaynak kodda gerçek anahtar bulunmadığı.
-- **`api_canli_test.php`:** Anahtarı olmayan servis atlanıyor ve nedeni yazılıyor. XAMPP'te gerçek Brevo sunucusuna yanlış anahtarla istek atıldı: `HTTP 401 – Key not found` döndü ve **tek denemede** bırakıldı (kalıcı hata tekrar denenmiyor). Cloudinary ve e-posta gönderimi, anahtarlar `backend/.env` dosyasına yazıldıktan sonra aynı komutla denenecek.
+- **`api_canli_test.php` (gerçek servisler, 26.11.2026):**
+  - **Cloudinary:** Test görseli yüklendi, `https://res.cloudinary.com/pjrr4suu/...` adresinden açıldı (HTTP 200) ve silindi. Her işlem tek denemede, yaklaşık 1,5 sn sürdü.
+  - **Brevo:** Kendi adresime test e-postası gönderildi (tek deneme, yaklaşık 1 sn).
+  - **Yanlış anahtar:** Brevo `HTTP 401 – Key not found` döndürdü ve istek **tek denemede** bırakıldı.
+  - Brevo anahtarı **kısıtlı** oluşturuldu: yalnızca *Transactional email* izni var, diğer bütün izinler kapalı (en az yetki ilkesi).
+  - Gönderen adresi ücretsiz bir e-posta (Gmail) olduğu için Brevo bir DMARC uyarısı veriyor. E-postalar gidiyor ama alıcıda Spam klasörüne düşebilir; bunu çözmek kendi alan adını gerektirir.
 - **Regresyon (XAMPP, PHP 8.2 + MariaDB, 26.11.2026):** `migrate.php --fresh --seed` ile 14 migration çalıştı ve örnek veri yüklendi. `crud_test`, `auth_test`, `listing_test`, `offer_message_test`, `ogrenci_test`, `api_integration_test` ve `api_canli_test` testlerinin hepsi geçti.
 - **Regresyon testinin bulduğu iki hata ve çözümü:**
   1. Migration 014'teki satır sonu açıklamalarında `;` vardı. `migrate.php` dosyayı `;` işaretinden böldüğü için açıklamanın yarısını SQL sanıp hata verdi. Açıklamalardaki `;` virgülle değiştirildi.
