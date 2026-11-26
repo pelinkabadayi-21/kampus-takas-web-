@@ -61,11 +61,15 @@ Auth::setResolver(function () use ($authService, $config) {
 });
 
 // Denetleyicileri ihtiyaç olunca oluşturan küçük fabrikalar (veri katmanı → iş katmanı → denetleyici)
-$listingController = function () use ($db, $integrations) {
+// Hafta 10: Yapay zekâ öneri servisi (Gemini anahtarı yoksa kural tabanlı çalışır)
+$aiService = fn() => new AiSuggestionService($integrations->llm(), new CategoryRepository($db()), new AiSuggestionRepository($db()));
+$aiController = fn() => new AiController($aiService(), new AiSuggestionRepository($db()));
+
+$listingController = function () use ($db, $integrations, $aiService) {
     $repo   = new ListingRepository($db());
     // Cloudinary ayarlıysa fotoğraflar oraya, değilse diske (Hafta 9)
     $images = new ImageService($repo, __DIR__ . '/uploads/listings', 'uploads/listings/', $integrations->imageStorage());
-    return new ListingController(new ListingService($repo, new CategoryRepository($db()), $images), $images);
+    return new ListingController(new ListingService($repo, new CategoryRepository($db()), $images), $images, $aiService());
 };
 $authController  = fn() => new AuthController($authService(), $config['auth']);
 $messageController = fn() => new MessageController(
@@ -113,6 +117,7 @@ $router->get('/api/categories', fn() => (new CategoryController(new CategoryServ
 // İlan listesi, detay, ekleme, güncelleme, silme
 $router->get('/api/listings',          fn()        => $listingController()->index());
 $router->get('/api/listings/options',  fn()        => $listingController()->options());
+$router->post('/api/ai/suggest',       fn()        => $aiController()->suggest());          // Hafta 10: kategori ve fiyat önerisi
 $router->get('/api/me/listings',       fn()        => $listingController()->mine());
 $router->get('/api/listings/{id}',     fn(int $id) => $listingController()->show($id));
 $router->post('/api/listings',         fn()        => $listingController()->store());
@@ -157,6 +162,7 @@ $router->put('/api/admin/users/{id}/verify',  fn(int $id) => $adminController()-
 $router->get('/api/admin/stats',              fn()        => $adminController()->stats());   // öğrenci bölümü (H5)
 $router->get('/api/admin/integrations',       fn()        => $adminController()->integrations());     // Hafta 9
 $router->post('/api/admin/integrations/test', fn()        => $adminController()->testIntegration());  // Hafta 9
+$router->get('/api/admin/ai-log',             fn()        => $aiController()->adminLog());            // Hafta 10
 
 // Hataları tek yerden JSON'a çevir
 try {

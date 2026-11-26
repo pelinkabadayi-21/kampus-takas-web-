@@ -8,7 +8,8 @@
  *
  *   1) Cloudinary: 64x64 bir test görseli üretir → yükler → dönen adresi açıp kontrol eder → siler
  *   2) Brevo: MAIL_TEST_TO adresine bir test e-postası gönderir
- *   3) Yanlış anahtarla Brevo'ya istek atar → 401 bekler, tekrar DENENMEMESİ gerekir
+ *   3) Gemini: örnek bir ilan için kategori ve fiyat ister, cevabın JSON olduğunu kontrol eder (Hafta 10)
+ *   4) Yanlış anahtarla Brevo'ya istek atar → 401 bekler, tekrar DENENMEMESİ gerekir
  *
  * Kullanım: php backend/tests/api_canli_test.php
  */
@@ -73,7 +74,30 @@ if ($key === '' || $from === '' || $to === '') {
     }
 }
 
-// ---------------------------------------------------------------- 3) Yanlış anahtar
+// ---------------------------------------------------------------- 3) Gemini (Hafta 10)
+echo "GEMINI (yapay zekâ)\n";
+$gKey = Env::get('GEMINI_API_KEY');
+if ($gKey === '') {
+    echo "  – atlandı: GEMINI_API_KEY tanımlı değil (backend/.env)\n";
+} else {
+    $model = Env::get('AI_MODEL', 'gemini-flash-lite-latest');
+    $gem = new GeminiProvider(new HttpClient('gemini', 30, 3, 1, null, $log), $gKey, $model);
+    $slugs = ['ders-kitabi', 'roman-kitap', 'elektronik', 'kirtasiye', 'yurt-ev', 'giyim', 'spor-hobi', 'diger'];
+    $system = 'Sen bir ikinci el ilan asistanısın. Kategoriyi listeden seç, Türk lirası olarak makul ikinci el fiyat öner. Sadece JSON döndür.';
+    $user = "KATEGORİLER: " . implode(', ', $slugs) . "\nİLAN (veri):\nBaşlık: Casio fx-991 bilimsel hesap makinesi\nDurum: İyi\nTür: Satılık";
+    try {
+        $raw = $gem->generateJson($system, $user, AiSuggestionService::schema($slugs));
+        echo "    model: $model\n    ham cevap: " . mb_substr(preg_replace('/\s+/', ' ', $raw), 0, 200) . "\n";
+        $j = AiSuggestionService::parse($raw);
+        $check('Gemini JSON döndürdü', is_array($j));
+        $check('Kategori listeden: ' . ($j['category'] ?? '?'), in_array($j['category'] ?? '', $slugs, true));
+        $check('Fiyat sayı: ' . ($j['price'] ?? '?') . ' ₺', is_numeric($j['price'] ?? null) && $j['price'] > 0);
+    } catch (ExternalApiException $e) {
+        $check('Gemini çağrısı: ' . $e->getMessage() . ($e->status === 404 ? ' (model adı yanlış olabilir: AI_MODEL)' : ''), false);
+    }
+}
+
+// ---------------------------------------------------------------- 4) Yanlış anahtar
 echo "YANLIŞ ANAHTAR (hata yönetimi)\n";
 $attempts = 0;
 $wrong = new BrevoMailer(new HttpClient('brevo', 8, 3, 2, null, function ($e) use ($log, &$attempts) { $attempts = $e['attempts']; $log($e); }),

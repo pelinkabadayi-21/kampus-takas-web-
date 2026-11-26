@@ -31,7 +31,6 @@ return [
         'timeout' => 8,     // harici servisin cevabı için en fazla kaç saniye beklenir
         'retries' => 2,     // geçici hatada (zaman aşımı, 429, 5xx) en fazla kaç kez daha denenir
     ],
-    'ai' => [
-        'api_key' => '',          // Yapay zekâ fiyat önerisi (ileriki haftalar)
-    ],
+    // Hafta 10 – Yapay zekâ önerisi: GEMINI_API_KEY ve (isteğe bağlı) AI_MODEL ortam değişkeninden okunur.
+    // Anahtar yoksa öneriler kural tabanlı yapılır (kategori anahtar kelimeyle, fiyat site medyanıyla).
 ];

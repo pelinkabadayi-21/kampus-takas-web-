@@ -232,7 +232,7 @@ unlink($envFile); putenv('KT_TEST_A'); putenv('KT_TEST_B'); putenv('KT_TEST_C');
 $getPdo = fn() => $pdo;
 $off = new Integrations(['cloudinary_url' => '', 'brevo_api_key' => '', 'mail_from' => '', 'timeout' => 8, 'retries' => 2], $getPdo);
 $check('Anahtar yoksa servisler kapalı, site hata vermez (fotoğraflar diske)', $off->imageStorage() === null && $off->mailer() === null
-    && $off->status() === ['image_storage' => 'yerel', 'email' => 'kapalı', 'site_url' => false]);
+    && $off->status() === ['image_storage' => 'yerel', 'email' => 'kapalı', 'ai' => 'kural', 'site_url' => false]);
 $on = new Integrations(['cloudinary_url' => 'cloudinary://1:2@kampus', 'brevo_api_key' => 'xkeysib-1', 'mail_from' => 'a@b.example.com', 'timeout' => 8, 'retries' => 2], $getPdo);
 $check('Anahtar varsa Cloudinary ve Brevo açılıyor', $on->imageStorage() instanceof CloudinaryImageStorage && $on->mailer() instanceof BrevoMailer);
 $check('Durum bilgisinde anahtarların kendisi YOK', !str_contains(json_encode($on->status()), 'xkeysib') && !str_contains(json_encode($on->status()), 'cloudinary://'));

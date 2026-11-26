@@ -22,6 +22,9 @@ class Integrations
             'mail_from'      => Env::get('MAIL_FROM'),
             'mail_from_name' => Env::get('MAIL_FROM_NAME', 'Kampüs Takas'),
             'site_url'       => Env::get('SITE_URL'),
+            'gemini_api_key' => Env::get('GEMINI_API_KEY'),                       // Hafta 10
+            'ai_model'       => Env::get('AI_MODEL', 'gemini-flash-lite-latest'),  // Hafta 10
+            'ai_timeout'     => 20,    // saniye: yapay zekâ cevabı (fotoğraflı istek daha uzun sürebilir)
             'timeout'        => 8,     // saniye: cevap için en fazla bekleme
             'retries'        => 2,     // geçici hatada en fazla 2 kez daha dene
         ];
@@ -46,6 +49,16 @@ class Integrations
         return new BrevoMailer($this->client('brevo', (int) $this->cfg['timeout']), $key, $from, $this->cfg['mail_from_name'] ?? 'Kampüs Takas');
     }
 
+    /** Hafta 10: Gemini anahtarı varsa yapay zekâ sağlayıcısı, yoksa null (öneriler kural tabanlı yapılır). */
+    public function llm(): ?LlmProvider
+    {
+        $key = $this->cfg['gemini_api_key'] ?? '';
+        if ($key === '') return null;
+        // Yapay zekâda tek yeniden deneme yeterli: kullanıcı formda bekliyor
+        return new GeminiProvider($this->client('gemini', (int) ($this->cfg['ai_timeout'] ?? 20), 1), $key,
+            ($this->cfg['ai_model'] ?? '') ?: 'gemini-flash-lite-latest');
+    }
+
     /** Sağlık kontrolü ve yönetim paneli için: hangi servis açık? (Anahtarların kendisi ASLA gösterilmez.) */
     public function status(): array
     {
@@ -54,6 +67,7 @@ class Integrations
         return [
             'image_storage' => $cloud ? 'cloudinary' : 'yerel',
             'email'         => $mail ? 'brevo' : 'kapalı',
+            'ai'            => ($this->cfg['gemini_api_key'] ?? '') !== '' ? 'gemini' : 'kural',   // Hafta 10
             'site_url'      => ($this->cfg['site_url'] ?? '') !== '',
         ];
     }
@@ -61,10 +75,10 @@ class Integrations
     public function siteUrl(): string { return (string) ($this->cfg['site_url'] ?? ''); }
 
     /** Günlüğe yazan HTTP istemcisi oluşturur. */
-    private function client(string $service, int $timeout): HttpClient
+    private function client(string $service, int $timeout, ?int $retries = null): HttpClient
     {
         $pdo = $this->pdo;
-        return new HttpClient($service, $timeout, 3, (int) ($this->cfg['retries'] ?? 2), null,
+        return new HttpClient($service, $timeout, 3, $retries ?? (int) ($this->cfg['retries'] ?? 2), null,
             fn(array $entry) => (new ApiLogRepository($pdo()))->log($entry));
     }
 }

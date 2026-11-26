@@ -108,6 +108,13 @@ class ListingService
         return $this->get($id);
     }
 
+    /** Hafta 10 – K7/A2: Yapay zekâ önerisinin fiyatını SİSTEM yazar (kullanıcı bu alanı gönderemez). */
+    public function setAiSuggestedPrice(int $id, ?float $price): array
+    {
+        $this->listings->update($id, ['ai_suggested_price' => $price]);
+        return $this->get($id);
+    }
+
     /** $actor verilirse sadece ilan sahibi veya yönetici güncelleyebilir. */
     public function update(int $id, array $d, ?array $actor = null): array
     {

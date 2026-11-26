@@ -3,7 +3,11 @@
 class ListingController
 {
     /** İlan kurallarını yapan servis ve fotoğraf servisi alınır. */
-    public function __construct(private ListingService $service, private ImageService $images) {}
+    public function __construct(
+        private ListingService $service,
+        private ImageService $images,
+        private ?AiSuggestionService $ai = null      // Hafta 10
+    ) {}
 
     // GET /api/listings?q=&category_id=&listing_type=&item_condition=&min_price=&max_price=&sort=&limit=&offset=   (herkese açık, sadece aktif ilanlar)
     public function index(): void
@@ -38,8 +42,19 @@ class ListingController
     public function store(): void
     {
         $user = Auth::requireUser();
-        // Giriş zorunlu; ilanı oluştur, 201 (oluşturuldu) döndür
-        Response::json(['success' => true, 'data' => $this->service->create(Request::json(), $user)], 201);
+        $data = Request::json();
+        // Hafta 10: Kullanıcı yapay zekâ önerisi kullandıysa önerinin numarasını gönderir (fiyatın kendisini değil)
+        $suggestionId = (int) ($data['ai_suggestion_id'] ?? 0);
+        unset($data['ai_suggestion_id']);
+        // Giriş zorunlu; ilanı oluştur
+        $listing = $this->service->create($data, $user);
+        // Önerinin fiyatını sunucu yazar ve öneri kabul edildi mi günlüğe işlenir (K7/A2)
+        if ($suggestionId && $this->ai) {
+            $aiPrice = $this->ai->attachToListing($suggestionId, $listing, (int) $user['id']);
+            if ($aiPrice !== null) $listing = $this->service->setAiSuggestedPrice((int) $listing['id'], $aiPrice);
+        }
+        // 201 (oluşturuldu) döndür
+        Response::json(['success' => true, 'data' => $listing], 201);
     }
 
     // PUT /api/listings/{id}   (ilan sahibi veya yönetici)

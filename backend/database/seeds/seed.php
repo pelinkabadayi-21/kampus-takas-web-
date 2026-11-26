@@ -23,7 +23,7 @@ $pick = fn(array $a) => $a[mt_rand(0, count($a) - 1)];
 
 // Önceki örnek veriyi temizle (tablolar korunur)
 $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-foreach (['external_api_logs', 'auth_tokens', 'notifications', 'reviews', 'trade_offers', 'messages', 'favorites', 'listing_images', 'listings', 'categories', 'users'] as $t) {
+foreach (['ai_suggestions', 'external_api_logs', 'auth_tokens', 'notifications', 'reviews', 'trade_offers', 'messages', 'favorites', 'listing_images', 'listings', 'categories', 'users'] as $t) {
     $pdo->exec("DELETE FROM $t");
     $pdo->exec("ALTER TABLE $t AUTO_INCREMENT = 1");
 }
