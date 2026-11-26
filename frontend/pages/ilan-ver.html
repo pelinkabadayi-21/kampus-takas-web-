@@ -59,6 +59,16 @@
         <small class="field-error"></small>
       </div>
 
+      <!-- Hafta 10: Yapay zekâ kategori ve fiyat önerisi -->
+      <div class="ai-box" id="ai-box">
+        <div class="ai-head">
+          <strong>✨ Kategori ve fiyat önerisi</strong>
+          <small class="muted">Başlık, açıklama, ürün durumu ve (varsa) ilk fotoğrafa bakarak önerir. Son karar sizin.</small>
+        </div>
+        <button type="button" class="btn btn-outline" id="ai-btn">✨ Öneri al</button>
+        <div id="ai-result" aria-live="polite"></div>
+      </div>
+
       <div class="field">
         <label for="meeting_point">📍 Buluşma noktası <span class="muted">(kampüste güvenli bir yer)</span></label>
         <input id="meeting_point" name="meeting_point" list="meeting-points" maxlength="120" placeholder="Listeden seçin ya da yazın">

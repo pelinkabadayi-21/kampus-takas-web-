@@ -131,6 +131,70 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // 6) Gönder
+  // ------------------------------------------------------------ Hafta 10: Yapay zekâ önerisi
+  // Kullanıcı öneriyi uygularsa önerinin NUMARASI ilanla birlikte gönderilir (fiyatın kendisi değil).
+  // Sunucu önerilen fiyatı kendi kaydından alır; kullanıcı bu alanı değiştiremez (K7).
+  let aiSuggestionId = null;
+  const aiBtn = document.getElementById('ai-btn');
+  const aiResult = document.getElementById('ai-result');
+  const tl = v => v == null ? '—' : Number(v).toLocaleString('tr-TR') + ' ₺';
+
+  aiBtn.addEventListener('click', async () => {
+    const title = form.elements.title.value.trim();
+    if (title.length < 3) { aiResult.innerHTML = '<p class="error-box">Önce en az 3 karakterlik bir başlık yazın.</p>'; form.elements.title.focus(); return; }
+    // Formdaki bilgiler + varsa ilk yeni fotoğraf
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('description', form.elements.description.value);
+    fd.append('item_condition', form.elements.item_condition.value);
+    fd.append('listing_type', form.querySelector('input[name=listing_type]:checked').value);
+    if (pending[0]) fd.append('image', pending[0].file);
+
+    aiBtn.disabled = true; aiBtn.textContent = 'Düşünüyor…';
+    aiResult.innerHTML = '<p class="muted">Öneri hazırlanıyor, birkaç saniye sürebilir…</p>';
+    try {
+      const { data: s } = await apiUpload('/ai/suggest', fd);
+      drawSuggestion(s);
+    } catch (err) {
+      aiResult.innerHTML = `<p class="error-box">${esc(err.message)}</p>`;
+      if (err.status === 401) location.href = 'giris.html?next=' + encodeURIComponent(location.pathname + location.search);
+    }
+    aiBtn.disabled = false; aiBtn.textContent = '✨ Yeniden öner';
+  });
+
+  // Öneriyi kaynağı, gerekçesi, güveni ve yapılan düzeltmelerle birlikte gösterir (şeffaflık, A7)
+  function drawSuggestion(s) {
+    const pct = Math.round((s.confidence ?? 0) * 100);
+    const isAi = s.source === 'ai';
+    aiResult.innerHTML = `
+      <div class="ai-card">
+        <span class="ai-source ${isAi ? 'ai' : 'rule'}">${isAi ? '🤖 Yapay zekâ önerisi' : '📏 Site verisine göre (kural tabanlı)'}</span>
+        <table class="facts">
+          <tr><th>Kategori</th><td><b>${esc(s.category.name)}</b></td></tr>
+          <tr><th>Fiyat</th><td>${s.price == null ? '<span class="muted">Fiyat önerisi yok</span>'
+            : `<b>${tl(s.price)}</b> <small class="muted">(makul aralık ${tl(s.price_min)} – ${tl(s.price_max)})</small>`}</td></tr>
+          <tr><th>Güven</th><td><span class="ai-bar"><span style="width:${pct}%"></span></span> %${pct}</td></tr>
+          <tr><th>Gerekçe</th><td>${esc(s.reason)}</td></tr>
+          <tr><th>Site verisi</th><td>${s.market.count ? `Bu kategoride ${s.market.count} satılık ilan, medyan ${tl(s.market.median)}` : 'Bu kategoride henüz satılık ilan yok'}
+            ${s.market.similar.length ? '<br><small class="muted">Benzer: ' + s.market.similar.map(m => `${esc(m.title)} (${tl(m.price)})`).join(' · ') + '</small>' : ''}</td></tr>
+        </table>
+        ${s.warnings.length ? `<ul class="ai-warn">${s.warnings.map(w => `<li>⚠ ${esc(w)}</li>`).join('')}</ul>` : ''}
+        <div class="ai-actions">
+          <button type="button" class="btn" data-apply="both">İkisini de uygula</button>
+          <button type="button" class="btn btn-outline" data-apply="cat">Sadece kategori</button>
+          ${s.price != null ? '<button type="button" class="btn btn-outline" data-apply="price">Sadece fiyat</button>' : ''}
+        </div>
+        <small class="muted">Öneriler otomatik üretilir ve hatalı olabilir; kategoriyi ve fiyatı dilediğiniz gibi değiştirebilirsiniz.</small>
+      </div>`;
+    aiResult.querySelectorAll('[data-apply]').forEach(b => b.addEventListener('click', () => {
+      const what = b.dataset.apply;
+      if (what !== 'price') form.elements.category_id.value = s.category.id;
+      if (what !== 'cat' && s.price != null) form.elements.price.value = Math.round(s.price);
+      aiSuggestionId = s.suggestion_id;      // ilan kaydedilirken gönderilecek
+      b.textContent = 'Uygulandı ✔';
+    }));
+  }
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     msg.innerHTML = ''; showFieldErrors(form, {});
@@ -139,6 +203,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     delete data.photo;
     if (data.listing_type === 'bagis') data.price = '';
     if (document.getElementById('status-field').hidden || !form.elements.status) delete data.status;
+    // Hafta 10: yeni ilanda öneri kullanıldıysa önerinin numarası (kabul edildi mi, sunucu günlüğe yazar)
+    if (!editId && aiSuggestionId) data.ai_suggestion_id = aiSuggestionId;
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true; const label = btn.textContent; btn.textContent = 'Kaydediliyor…';

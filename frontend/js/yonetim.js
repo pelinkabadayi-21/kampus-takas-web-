@@ -110,4 +110,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadIntegrations();
   });
   loadIntegrations();
+
+  // ------------------------------------------------------------ Hafta 10: Yapay zekâ kullanım günlüğü
+  // Her öneri: istem sürümü, kaynak (yapay zekâ / kural), sonuç, doğrulamada yapılan düzeltmeler, kullanıcı kabul etti mi.
+  const aiBox = document.getElementById('ai-log');
+  const pctOf = (a, b) => b ? Math.round(a * 100 / b) + '%' : '—';
+  async function loadAi() {
+    let d;
+    try { d = (await apiGet('/admin/ai-log')).data; } catch (e) { return; }
+    const s = d.stats;
+    aiBox.hidden = false;
+    aiBox.innerHTML = `
+      <div class="card-head"><h2>🤖 Yapay zekâ önerileri</h2>
+        <span>${d.enabled ? '<span class="status ok">Gemini açık</span>' : '<span class="status">Kural tabanlı</span> <small class="muted">GEMINI_API_KEY tanımlı değil</small>'}
+        <small class="muted">İstem sürümü: ${esc(d.prompt_version)}</small></span></div>
+      <h3>Son 7 gün</h3>
+      <table class="facts">
+        <tr><th>Toplam öneri</th><td>${s.total} <small class="muted">(yapay zekâ ${s.from_ai}, kural tabanlı ${s.from_rules}, ort. ${s.avg_ms || 0} ms)</small></td></tr>
+        <tr><th>Yapay zekâ hatası</th><td>${s.errors} <small class="muted">(zaman aşımı, kota, bozuk cevap → kural tabanlı öneri verildi)</small></td></tr>
+        <tr><th>Doğrulamada düzeltilen</th><td>${s.corrected} <small class="muted">(listede olmayan kategori, uçuk/geçersiz fiyat…)</small></td></tr>
+        <tr><th>İlanda kullanılan</th><td>${s.used} — kategori kabul ${pctOf(s.accepted_category, s.used)}, fiyat kabul ${pctOf(s.accepted_price, s.used)}</td></tr>
+      </table>
+      <h3>Son öneriler</h3>
+      ${d.recent.length ? `<div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Zaman</th><th>Başlık</th><th>Kaynak</th><th>Kategori</th><th>Fiyat</th><th>Güven</th><th>Düzeltme / hata</th><th>Kabul</th></tr></thead>
+        <tbody>${d.recent.map(r => {
+          const warn = (() => { try { return JSON.parse(r.warnings || '[]'); } catch (e) { return []; } })();
+          const acc = r.listing_id == null ? '—' : `${r.accepted_category == 1 ? '✅' : '❌'} kat. / ${r.accepted_price == null ? '—' : r.accepted_price == 1 ? '✅' : '❌'} fiyat`;
+          return `<tr><td>${timeAgo(r.created_at)}</td><td>${esc(r.input_title)}${r.had_image == 1 ? ' 📷' : ''}</td>
+            <td>${r.source === 'ai' ? '🤖 AI' : '📏 Kural'}</td><td>${esc(r.category_slug || '')}</td>
+            <td>${r.price == null ? '—' : Math.round(r.price) + ' ₺'}</td><td>${r.confidence == null ? '—' : Math.round(r.confidence * 100) + '%'}</td>
+            <td style="white-space:normal">${esc([r.error, ...warn].filter(Boolean).join(' · '))}</td><td>${acc}</td></tr>`;
+        }).join('')}</tbody></table></div>` : '<p class="muted">Henüz öneri istenmedi.</p>'}`;
+  }
+  loadAi();
 });

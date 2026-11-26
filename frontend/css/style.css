@@ -240,3 +240,16 @@ a.btn { display: inline-block; text-align: center; }
 .review-form input { width: 100%; padding: 8px 10px; border: 1px solid #d9d4e8; border-radius: 8px; font: inherit; margin: 4px 0; }
 .review-item { padding: 8px 0; border-bottom: 1px solid #eee; }
 .review-item:last-child { border-bottom: 0; }
+
+/* Hafta 10 – Yapay zekâ önerisi */
+.ai-box { border: 1px dashed var(--primary); background: #f7f4fd; border-radius: var(--radius); padding: 14px 16px; margin: 8px 0 18px; display: grid; gap: 10px; }
+.ai-head { display: grid; gap: 2px; }
+.ai-box #ai-btn { justify-self: start; }
+.ai-card { background: #fff; border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+.ai-source { justify-self: start; font-size: .85rem; padding: 3px 10px; border-radius: 999px; }
+.ai-source.ai { background: #ece7f8; color: var(--primary-dark); }
+.ai-source.rule { background: #fff3df; color: #8a5a00; }
+.ai-bar { display: inline-block; width: 120px; height: 8px; background: #eee; border-radius: 99px; overflow: hidden; vertical-align: middle; }
+.ai-bar span { display: block; height: 100%; background: var(--primary); }
+.ai-warn { list-style: none; margin: 0; padding: 8px 12px; background: #fff8e8; border-radius: 8px; color: #7a5200; font-size: .9rem; display: grid; gap: 4px; }
+.ai-actions { display: flex; gap: 8px; flex-wrap: wrap; }

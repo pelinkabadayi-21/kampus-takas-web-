@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (h.integrations) {
       const intEl = document.getElementById('int-status');
       const cloud = h.integrations.image_storage === 'cloudinary', mail = h.integrations.email !== 'kapalı';
-      intEl.textContent = `Fotoğraflar: ${cloud ? 'Cloudinary ☁️' : 'sunucu diski'} · E-posta bildirimi: ${mail ? 'açık ✉️' : 'kapalı'}`;
+      const ai = h.integrations.ai === 'gemini';   // Hafta 10
+      intEl.textContent = `Fotoğraflar: ${cloud ? 'Cloudinary ☁️' : 'sunucu diski'} · E-posta bildirimi: ${mail ? 'açık ✉️' : 'kapalı'} · Öneri: ${ai ? 'yapay zekâ 🤖' : 'kural tabanlı'}`;
       intEl.className = 'status' + (cloud && mail ? ' ok' : '');
       intEl.hidden = false;
     }
