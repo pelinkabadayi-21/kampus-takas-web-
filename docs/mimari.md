@@ -20,10 +20,14 @@ flowchart TB
 
     DB[("🗄️ MySQL<br/>kampus_takas")]
     AI["🤖 Yapay Zekâ API<br/>(fiyat/kategori önerisi)"]
+    CLD["☁️ Cloudinary<br/>görsel depolama (Hafta 9)"]
+    BRV["✉️ Brevo<br/>e-posta (Hafta 9)"]
 
     JS -- "HTTP / JSON<br/>GET /api/categories" --> IDX
     R --> DB
     S -. "ileriki haftalar" .-> AI
+    S -- "HttpClient<br/>imzalı yükleme" --> CLD
+    S -- "HttpClient<br/>api-key başlığı" --> BRV
 ```
 
 ## Bir isteğin yolculuğu (örnek: kategorileri listele)
@@ -44,7 +48,7 @@ kampus-takas-web-/
 │   ├── tests/           → crud_test.php
 │   ├── public/          → Dışarıya açık tek klasör: index.php, .htaccess, uploads/
 │   └── src/
-│       ├── Core/        → Ortak araçlar: Database, Router, Response
+│       ├── Core/        → Ortak araçlar: Database, Router, Response, Auth, Events, HttpClient, Env
 │       ├── Controllers/ → Sunum katmanı
 │       ├── Services/    → İş katmanı
 │       └── Repositories/→ Veri katmanı

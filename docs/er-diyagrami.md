@@ -17,6 +17,7 @@ erDiagram
     USERS ||--o{ REVIEWS : "yazar / alır"
     USERS ||--o{ NOTIFICATIONS : "alır"
     USERS ||--o{ AUTH_TOKENS : "oturumları"
+    USERS |o--o{ EXTERNAL_API_LOGS : "harici API çağrıları (H9)"
 
     USERS {
         int id PK
@@ -29,6 +30,7 @@ erDiagram
         enum role "ogrenci/yonetici"
         tinyint failed_login_count
         datetime locked_until
+        bool email_notifications "H9"
     }
     AUTH_TOKENS {
         int id PK
@@ -93,6 +95,17 @@ erDiagram
         enum type
         varchar content
         bool is_read
+    }
+    EXTERNAL_API_LOGS {
+        int id PK
+        varchar service "cloudinary/brevo"
+        varchar action "upload/destroy/email"
+        int user_id FK "NULL olabilir"
+        smallint status_code
+        bool success
+        tinyint attempts
+        int duration_ms
+        varchar error
     }
 ```
 

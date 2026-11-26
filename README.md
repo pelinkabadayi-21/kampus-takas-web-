@@ -19,6 +19,7 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 | Takas teklifi (durum makinesi: kabul/red/geri çek/tamamla/vazgeç) | ✅ Hafta 7 |
 | Değerlendirme (yıldız + yorum, satıcı puanı) | ✅ Hafta 8 |
 | Bildirim (olay tabanlı kanca, menü sayaçları) | ✅ Hafta 7 |
+| Harici API: Cloudinary görsel depolama + Brevo e-posta bildirimi (hata, zaman aşımı, hız sınırı yönetimi) | ✅ Hafta 9 |
 | Yapay zekâ kategori/fiyat önerisi | ⏳ |
 | Öğrenci doğrulama · Bağış modu · Konum bazlı buluşma | 🟡 Doğrulama (Hafta 5), bağış ilanı ve önerilen buluşma noktaları (Hafta 6) |
 
@@ -26,13 +27,15 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 - **Backend:** PHP 8 (katmanlı mimari, PDO), REST/JSON API
 - **Veritabanı:** MySQL / MariaDB
 - **Frontend:** HTML5, CSS3, JavaScript (fetch API)
+- **Harici servisler:** Cloudinary (görsel depolama), Brevo (e-posta) — anahtarlar ortam değişkeninde
 - **Ortam:** XAMPP, Git/GitHub
 
 ## Klasör Yapısı
 ```
 backend/    PHP API  (Controllers → Services → Repositories)
   database/   migrations/, seeds/, migrate.php, schema.sql
-  tests/      CRUD testi
+  tests/      modül testleri (api_integration_test.php veritabanı sunucusu olmadan çalışır)
+  .env.example  API anahtarlarının adları (gerçek .env GitHub'a yüklenmez)
 frontend/   HTML/CSS/JS arayüz
 docs/       ER diyagramı, mimari şema, güvenlik notu, haftalık raporlar
 ```
@@ -49,7 +52,15 @@ Proje Docker ile Render'da ücretsiz yayınlanır. Tek konteynerde PHP 8.2 + Apa
 
 Alternatif: **+ New → Blueprint** → bu depoyu seç (`render.yaml` ayarları otomatik doldurur).
 
-> **Ücretsiz plan sınırları:** 15 dakika kullanılmazsa servis uyur, ilk açılış yaklaşık 1 dakika sürer. Disk kalıcı değildir; her açılışta veritabanı örnek veriyle yeniden kurulur ve yüklenen fotoğraflar silinir.
+**Harici servisler (Hafta 9, isteğe bağlı):** Servis → **Environment** → aşağıdaki değişkenleri ekle → **Save, rebuild and deploy**. Girilmezse site yine çalışır; fotoğraflar diske kaydedilir, e-posta gönderilmez.
+
+| Değişken | Nereden alınır |
+|---|---|
+| `CLOUDINARY_URL` | cloudinary.com → Dashboard → *API Environment variable* (`cloudinary://KEY:SECRET@HESAP`) |
+| `BREVO_API_KEY` | brevo.com → SMTP & API → API Keys |
+| `MAIL_FROM` | Brevo → Senders bölümünde doğrulanmış gönderen adresi |
+
+> **Ücretsiz plan sınırları:** 15 dakika kullanılmazsa servis uyur, ilk açılış yaklaşık 1 dakika sürer. Disk kalıcı değildir; her açılışta veritabanı örnek veriyle yeniden kurulur. `CLOUDINARY_URL` girilmediyse yüklenen fotoğraflar da silinir (girildiyse Cloudinary'de kalıcıdır).
 
 ## Kurulum (XAMPP)
 1. Depoyu `C:\xampp\htdocs\` içine klonla:
@@ -58,6 +69,7 @@ Alternatif: **+ New → Blueprint** → bu depoyu seç (`render.yaml` ayarları 
    ```
 2. XAMPP'ten **Apache** ve **MySQL**'i başlat.
 3. `backend/config/config.example.php` dosyasını kopyalayıp adını `config.php` yap, gerekirse şifreyi düzenle.
+   İsteğe bağlı (Hafta 9): `backend/.env.example` dosyasını `backend/.env` olarak kopyalayıp Cloudinary / Brevo anahtarlarını yaz. **Anahtarlar `config.php`'ye veya koda yazılmaz.**
 4. XAMPP Kontrol Paneli → **Shell** → veritabanını kur ve örnek veriyi yükle:
    ```bash
    cd C:\xampp\htdocs\kampus-takas-web-
@@ -67,6 +79,8 @@ Alternatif: **+ New → Blueprint** → bu depoyu seç (`render.yaml` ayarları 
    php backend/tests/listing_test.php
    php backend/tests/offer_message_test.php
    php backend/tests/ogrenci_test.php
+   php backend/tests/api_integration_test.php   # Hafta 9 (sahte servis cevaplarıyla)
+   php backend/tests/api_canli_test.php         # Hafta 9 (gerçek servislerle; .env gerekir)
    ```
    (Alternatif: phpMyAdmin → İçe aktar → `backend/database/schema.sql`. Bu yolla sadece tablolar ve kategoriler gelir.)
 5. Test:
@@ -87,11 +101,12 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 
 | Yöntem | Adres | Erişim | Açıklama |
 |---|---|---|---|
-| GET | `/api/health` | 🔓 | API ve veritabanı durumu |
+| GET | `/api/health` | 🔓 | API, veritabanı ve harici servis durumu (anahtarlar gösterilmez) |
 | POST | `/api/auth/register` | 🔓 | Kayıt ol |
 | POST | `/api/auth/login` | 🔓 | Giriş yap (HttpOnly çerez + token döner) |
 | POST | `/api/auth/logout` | 🔑 | Çıkış yap (token sunucudan silinir) |
 | GET | `/api/auth/me` | 🔑 | Giriş yapmış kullanıcı |
+| PUT | `/api/me/preferences` | 🔑 | E-posta bildirimi aç/kapat `{email_notifications}` (Hafta 9) |
 | GET | `/api/categories` | 🔓 | Kategori listesi (aktif ilan sayısıyla) |
 | GET | `/api/listings` | 🔓 | İlan listesi (sadece yayındakiler). Filtreler: `q`, `category_id`, `listing_type`, `item_condition`, `min_price`, `max_price`, `sort` (yeni/ucuz/pahali), `limit`, `offset` |
 | GET | `/api/listings/options` | 🔓 | Form seçenekleri (durumlar, buluşma noktaları, limitler) |
@@ -100,13 +115,15 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | POST | `/api/listings` | 🔑 | İlan oluştur (sahibi oturumdan alınır) |
 | PUT | `/api/listings/{id}` | 🔑 sahibi / 🛡️ | İlan güncelle (JSON, kısmi) |
 | DELETE | `/api/listings/{id}` | 🔑 sahibi / 🛡️ | İlan sil (fotoğraf dosyaları da silinir) |
-| POST | `/api/listings/{id}/images` | 🔑 sahibi / 🛡️ | Fotoğraf yükle (`multipart/form-data`, alan: `image`; JPG/PNG/WEBP, ≤ 5 MB, ≤ 5 adet) |
+| POST | `/api/listings/{id}/images` | 🔑 sahibi / 🛡️ | Fotoğraf yükle (`multipart/form-data`, alan: `image`; JPG/PNG/WEBP, ≤ 5 MB, ≤ 5 adet). Cloudinary ayarlıysa oraya, değilse diske; cevaptaki `storage` alanı nereye kaydedildiğini söyler |
 | DELETE | `/api/listings/{id}/images/{imageId}` | 🔑 sahibi / 🛡️ | Fotoğraf sil |
 | PUT | `/api/listings/{id}/images/{imageId}/cover` | 🔑 sahibi / 🛡️ | Kapak fotoğrafı yap |
 | GET | `/api/admin/users` | 🛡️ | Kullanıcı listesi |
 | PUT | `/api/admin/users/{id}/role` | 🛡️ | Rol değiştir (`ogrenci` / `yonetici`) |
 | PUT | `/api/admin/users/{id}/verify` | 🛡️ | Öğrenci doğrulamasını aç/kapat |
 | GET | `/api/admin/stats` | 🛡️ | Yönetici istatistikleri (öğrenci bölümü, Hafta 5) |
+| GET | `/api/admin/integrations` | 🛡️ | Harici servis durumu, son 24 saat özeti, son çağrılar (Hafta 9) |
+| POST | `/api/admin/integrations/test` | 🛡️ | `{service: "email"\|"image"}` canlı deneme (Hafta 9) |
 | GET | `/api/messages` | 🔑 | Gelen kutusu |
 | GET | `/api/messages/{ilanId}/{kisiId}` | 🔑 taraflar | Konuşma (`?after=ID` ile sadece yeni mesajlar) |
 | POST | `/api/messages` | 🔑 | Mesaj gönder `{listing_id, receiver_id?, body}` |
@@ -130,8 +147,9 @@ Güvenlik önlemlerinin özeti: [docs/guvenlik-notu.md](docs/guvenlik-notu.md)
 | 5 | Rol kontrollü uç `GET /api/admin/stats` | `AdminController::stats()` |
 | 6 | K8: Başlık tamamen büyük harf olamaz | `ListingService::validate()` |
 | 7 | T8: Satılık ilanda teklif fiyatın yarısından az olamaz | `TradeOfferService::create()` |
+| 9 | API çağrısını kendim yazıp test etmek, anahtarı ortam değişkeninde saklamak, E5: kullanıcıya saatte en fazla 5 e-posta | `BrevoMailer::send()`, `backend/.env`, `EmailListeners::notify()`, `tests/api_canli_test.php` |
 
-Ayrıntılar her haftanın raporunda (`docs/hafta-0N.md`), test: `php backend/tests/ogrenci_test.php`. Haftalık ilerleme raporları ve AI kullanım günlükleri: `docs/raporlar/`.
+Ayrıntılar her haftanın raporunda (`docs/hafta-0N.md`), test: `php backend/tests/ogrenci_test.php` (H4–H7) ve `php backend/tests/api_integration_test.php` (H9). Haftalık ilerleme raporları ve AI kullanım günlükleri: `docs/raporlar/`.
 
 ## Haftalık İlerleme
 
@@ -147,3 +165,4 @@ Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile b
 | 6 | Çekirdek Modül A: İlan Oluşturma ve Katalog | [hafta-06.md](docs/hafta-06.md) | 7 iş kuralı (ilan limiti, durum geçişleri, mükerrer ilan…), fotoğraf yükleme (içerik kontrolü, EXIF/GPS silme, küçültme), kapak seçme, kendi ilanlarım, ürün durumu filtresi, ilan testi | İlan ver / düzenle formu, fotoğraf önizleme, galeri, sahibine düzenle/kaldır/sil, ilanlarım (durumlarla) |
 | 7 | Çekirdek Modül B: Mesajlaşma ve Takas Teklifi + Entegrasyon | [hafta-07.md](docs/hafta-07.md) | Mesaj kuralları M1–M7, teklif durum makinesi ve kuralları T1–T7, transaction ile kabul (çakışan teklifleri kapatma), olay tabanlı bildirim kancası, mesaj/teklif/bildirim uçları, migration 012, test | Mesajlar (iki panel, canlı yenileme, mobil), teklif formu (ilan türüne göre), gelen teklifler, teklifler sayfası, bildirimler, menü sayaçları |
 | 8 | VİZE: Ara Sürüm, Entegrasyon ve Sözlü Hazırlık | [hafta-08.md](docs/hafta-08.md) · [demo senaryosu](docs/demo-senaryosu.md) | Değerlendirme modülü (R1–R4), bilinen hataların giderilmesi (backend klasör erişimi, MySQL GROUP BY uyumu), Docker + Render canlı yayın, `v0.8.0` | API adresi otomatik (localhost bağımlılığı kaldırıldı), değerlendirme formu, satıcı puanı, aldığım değerlendirmeler |
+| 9 | Harici API Entegrasyonu: Görsel/Bildirim | [hafta-09.md](docs/hafta-09.md) | `HttpClient` (zaman aşımı, yeniden deneme, 429/Retry-After, günlük), Cloudinary imzalı yükleme/silme + diske yedekleme, Brevo e-posta kancası (E1–E5), ortam değişkenleri (`.env`), migration 014, API günlüğü, yönetici uçları, 42 testlik entegrasyon testi | Cloudinary adresleri + boyuta göre küçültülmüş fotoğraf, Hesabım'da e-posta tercihi, yönetim panelinde harici servisler kartı ve test butonları, ana sayfada servis durumu |

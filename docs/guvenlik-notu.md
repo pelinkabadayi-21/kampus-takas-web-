@@ -50,7 +50,16 @@
 - **Güvenlik başlıkları:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (sitenin başka bir sitede çerçeve içinde açılmasını, yani clickjacking'i engeller), `Referrer-Policy: same-origin`.
 - **Gizli ayarlar:** `config.php` dosyası `.gitignore`'da; veritabanı şifresi GitHub'a yüklenmez.
 
-## 6. OWASP Top 10 ile eşleştirme
+## 6. Harici API anahtarları (Hafta 9)
+- Cloudinary ve Brevo anahtarları **koda, `config.php`'ye veya GitHub'a yazılmaz.** XAMPP'te `backend/.env` dosyasında (`.gitignore`'da), Render'da panelin *Environment* bölümünde durur. `render.yaml` bu değişkenleri `sync: false` ile tanımlar; değerleri depoya girmez.
+- `backend/` klasörü `.htaccess` ile tarayıcıya kapalıdır; `.env` dosyası adres yazılarak indirilemez. Docker imajına da kopyalanmaz (`.dockerignore`).
+- Cloudinary'de gizli anahtar isteğe eklenmez, sadece **SHA-1 imzası** gönderilir. İmza 1 saat geçerlidir; yakalanan bir istek sonradan kullanılamaz.
+- Brevo anahtarı yalnızca HTTPS ile, `api-key` başlığında gider. cURL'de sertifika doğrulaması (`CURLOPT_SSL_VERIFYPEER`) her zaman açıktır.
+- `/api/health`, yönetim paneli ve `external_api_logs` tablosu anahtarı, e-posta adresini ve e-posta içeriğini **göstermez/yazmaz**; sadece "açık/kapalı" ve çağrının sonucu tutulur.
+- Fotoğraf, EXIF/GPS bilgisi silindikten **sonra** Cloudinary'ye gönderilir (KVKK). E-postalarda karşı tarafın iletişim bilgisi yoktur; kullanıcının yazdığı metinler HTML kaçışıyla eklenir.
+- Anahtar sızarsa: servisin panelinden anahtar iptal edilip yenisi üretilir, sadece Render'daki değişken değiştirilir; kodda değişiklik gerekmez.
+
+## 7. OWASP Top 10 ile eşleştirme
 
 | OWASP riski | Projedeki önlem |
 |---|---|
@@ -58,10 +67,10 @@
 | A02 Kriptografik hatalar | bcrypt ile parola, SHA-256 ile token özeti, `random_bytes` |
 | A03 Enjeksiyon | Prepared statement, `esc()` |
 | A04 Güvensiz tasarım | Kayıtta rol seçilemiyor, yönetici kendi rolünü değiştiremiyor |
-| A05 Güvenlik yapılandırması | Güvenlik başlıkları, `debug` yayında kapatılacak, `config.php` gizli |
+| A05 Güvenlik yapılandırması | Güvenlik başlıkları, canlıda `debug` kapalı, `config.php` ve `.env` gizli, API anahtarları ortam değişkeninde (Hafta 9) |
 | A07 Kimlik doğrulama hataları | Parola kuralı, hesap kilidi, genel hata mesajı, token süresi |
 
-## 7. Bilinen sınırlar / ileride yapılacaklar
+## 8. Bilinen sınırlar / ileride yapılacaklar
 - Şu an site HTTP üzerinde çalışıyor. Yayına alınırken HTTPS açılmalı ve `cookie_secure => true` yapılmalı.
 - "Parolamı unuttum" ve e-posta ile doğrulama henüz yok; e-posta gönderimi gerektirdiği için ileride eklenebilir. Öğrenci doğrulaması şimdilik okul e-postası alan adına ve yönetici onayına dayanıyor.
 - Hesap kilidi e-posta bazlıdır. Çok sayıda farklı hesabı deneyen bir saldırgana karşı IP bazlı sınırlama da eklenebilir.
