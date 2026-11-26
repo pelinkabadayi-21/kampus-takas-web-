@@ -20,6 +20,7 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 | Değerlendirme (yıldız + yorum, satıcı puanı) | ✅ Hafta 8 |
 | Bildirim (olay tabanlı kanca, menü sayaçları) | ✅ Hafta 7 |
 | Harici API: Cloudinary görsel depolama + Brevo e-posta bildirimi (hata, zaman aşımı, hız sınırı yönetimi) | ✅ Hafta 9 |
+| Yapay zekâ: kategori ve fiyat önerisi (Gemini, çıktı doğrulama, kural tabanlı yedek, AI kullanım günlüğü) | ✅ Hafta 10 |
 | Yapay zekâ kategori/fiyat önerisi | ⏳ |
 | Öğrenci doğrulama · Bağış modu · Konum bazlı buluşma | 🟡 Doğrulama (Hafta 5), bağış ilanı ve önerilen buluşma noktaları (Hafta 6) |
 
@@ -27,7 +28,7 @@ Kampüs içi ikinci el kitap ve eşya **ilan, takas ve mesajlaşma** platformu.
 - **Backend:** PHP 8 (katmanlı mimari, PDO), REST/JSON API
 - **Veritabanı:** MySQL / MariaDB
 - **Frontend:** HTML5, CSS3, JavaScript (fetch API)
-- **Harici servisler:** Cloudinary (görsel depolama), Brevo (e-posta) — anahtarlar ortam değişkeninde
+- **Harici servisler:** Cloudinary (görsel depolama), Brevo (e-posta), Google Gemini (yapay zekâ önerisi) — anahtarlar ortam değişkeninde
 - **Ortam:** XAMPP, Git/GitHub
 
 ## Klasör Yapısı
@@ -59,6 +60,7 @@ Alternatif: **+ New → Blueprint** → bu depoyu seç (`render.yaml` ayarları 
 | `CLOUDINARY_URL` | cloudinary.com → Dashboard → *API Environment variable* (`cloudinary://KEY:SECRET@HESAP`) |
 | `BREVO_API_KEY` | brevo.com → SMTP & API → API Keys |
 | `MAIL_FROM` | Brevo → Senders bölümünde doğrulanmış gönderen adresi |
+| `GEMINI_API_KEY` | aistudio.google.com → Get API key (Hafta 10; yoksa öneriler kural tabanlı) |
 
 > **Ücretsiz plan sınırları:** 15 dakika kullanılmazsa servis uyur, ilk açılış yaklaşık 1 dakika sürer. Disk kalıcı değildir; her açılışta veritabanı örnek veriyle yeniden kurulur. `CLOUDINARY_URL` girilmediyse yüklenen fotoğraflar da silinir (girildiyse Cloudinary'de kalıcıdır).
 
@@ -80,6 +82,7 @@ Alternatif: **+ New → Blueprint** → bu depoyu seç (`render.yaml` ayarları 
    php backend/tests/offer_message_test.php
    php backend/tests/ogrenci_test.php
    php backend/tests/api_integration_test.php   # Hafta 9 (sahte servis cevaplarıyla)
+   php backend/tests/ai_test.php                # Hafta 10 (sahte yapay zekâ cevaplarıyla)
    php backend/tests/api_canli_test.php         # Hafta 9 (gerçek servislerle; .env gerekir)
    ```
    (Alternatif: phpMyAdmin → İçe aktar → `backend/database/schema.sql`. Bu yolla sadece tablolar ve kategoriler gelir.)
@@ -106,6 +109,7 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | POST | `/api/auth/login` | 🔓 | Giriş yap (HttpOnly çerez + token döner) |
 | POST | `/api/auth/logout` | 🔑 | Çıkış yap (token sunucudan silinir) |
 | GET | `/api/auth/me` | 🔑 | Giriş yapmış kullanıcı |
+| POST | `/api/ai/suggest` | 🔑 | Kategori ve fiyat önerisi (Hafta 10). JSON veya multipart (+ `image`) |
 | PUT | `/api/me/preferences` | 🔑 | E-posta bildirimi aç/kapat `{email_notifications}` (Hafta 9) |
 | GET | `/api/categories` | 🔓 | Kategori listesi (aktif ilan sayısıyla) |
 | GET | `/api/listings` | 🔓 | İlan listesi (sadece yayındakiler). Filtreler: `q`, `category_id`, `listing_type`, `item_condition`, `min_price`, `max_price`, `sort` (yeni/ucuz/pahali), `limit`, `offset` |
@@ -122,6 +126,7 @@ Ana sayfada **"API çalışıyor"** ve **"Veritabanı bağlı"** yazıyorsa kuru
 | PUT | `/api/admin/users/{id}/role` | 🛡️ | Rol değiştir (`ogrenci` / `yonetici`) |
 | PUT | `/api/admin/users/{id}/verify` | 🛡️ | Öğrenci doğrulamasını aç/kapat |
 | GET | `/api/admin/stats` | 🛡️ | Yönetici istatistikleri (öğrenci bölümü, Hafta 5) |
+| GET | `/api/admin/ai-log` | 🛡️ | Yapay zekâ kullanım günlüğü: 7 günlük özet, son öneriler (Hafta 10) |
 | GET | `/api/admin/integrations` | 🛡️ | Harici servis durumu, son 24 saat özeti, son çağrılar (Hafta 9) |
 | POST | `/api/admin/integrations/test` | 🛡️ | `{service: "email"\|"image"}` canlı deneme (Hafta 9) |
 | GET | `/api/messages` | 🔑 | Gelen kutusu |
@@ -147,9 +152,10 @@ Güvenlik önlemlerinin özeti: [docs/guvenlik-notu.md](docs/guvenlik-notu.md)
 | 5 | Rol kontrollü uç `GET /api/admin/stats` | `AdminController::stats()` |
 | 6 | K8: Başlık tamamen büyük harf olamaz | `ListingService::validate()` |
 | 7 | T8: Satılık ilanda teklif fiyatın yarısından az olamaz | `TradeOfferService::create()` |
+| 10 | İstem tasarımı ve çıktı işleme; AI çıktısını doğrulama — D5: önerilen fiyat kategori medyanının ¼'ü ile 4 katı arasında | `AiSuggestionService::buildPrompt()`, `parse()`, `validate()` |
 | 9 | API çağrısını kendim yazıp test etmek, anahtarı ortam değişkeninde saklamak, E5: kullanıcıya saatte en fazla 5 e-posta | `BrevoMailer::send()`, `backend/.env`, `EmailListeners::notify()`, `tests/api_canli_test.php` |
 
-Ayrıntılar her haftanın raporunda (`docs/hafta-0N.md`), test: `php backend/tests/ogrenci_test.php` (H4–H7) ve `php backend/tests/api_integration_test.php` (H9). Haftalık ilerleme raporları ve AI kullanım günlükleri: `docs/raporlar/`.
+Ayrıntılar her haftanın raporunda (`docs/hafta-0N.md`), test: `php backend/tests/ogrenci_test.php` (H4–H7), `php backend/tests/api_integration_test.php` (H9) ve `php backend/tests/ai_test.php` (H10). Haftalık ilerleme raporları ve AI kullanım günlükleri: `docs/raporlar/`.
 
 ## Haftalık İlerleme
 
@@ -166,3 +172,4 @@ Her haftanın commit mesajı **"Hafta N [backend] / [frontend] / [docs]"** ile b
 | 7 | Çekirdek Modül B: Mesajlaşma ve Takas Teklifi + Entegrasyon | [hafta-07.md](docs/hafta-07.md) | Mesaj kuralları M1–M7, teklif durum makinesi ve kuralları T1–T7, transaction ile kabul (çakışan teklifleri kapatma), olay tabanlı bildirim kancası, mesaj/teklif/bildirim uçları, migration 012, test | Mesajlar (iki panel, canlı yenileme, mobil), teklif formu (ilan türüne göre), gelen teklifler, teklifler sayfası, bildirimler, menü sayaçları |
 | 8 | VİZE: Ara Sürüm, Entegrasyon ve Sözlü Hazırlık | [hafta-08.md](docs/hafta-08.md) · [demo senaryosu](docs/demo-senaryosu.md) | Değerlendirme modülü (R1–R4), bilinen hataların giderilmesi (backend klasör erişimi, MySQL GROUP BY uyumu), Docker + Render canlı yayın, `v0.8.0` | API adresi otomatik (localhost bağımlılığı kaldırıldı), değerlendirme formu, satıcı puanı, aldığım değerlendirmeler |
 | 9 | Harici API Entegrasyonu: Görsel/Bildirim | [hafta-09.md](docs/hafta-09.md) | `HttpClient` (zaman aşımı, yeniden deneme, 429/Retry-After, günlük), Cloudinary imzalı yükleme/silme + diske yedekleme, Brevo e-posta kancası (E1–E5), ortam değişkenleri (`.env`), migration 014, API günlüğü, yönetici uçları, 42 testlik entegrasyon testi | Cloudinary adresleri + boyuta göre küçültülmüş fotoğraf, Hesabım'da e-posta tercihi, yönetim panelinde harici servisler kartı ve test butonları, ana sayfada servis durumu |
+| 10 | Yapay Zekâ Bileşeni: Kategori ve Fiyat Önerisi | [hafta-10.md](docs/hafta-10.md) | `AiSuggestionService` (girdi hazırlama, maskeleme, site verisi, sürümlü istem, JSON şeması, D1–D8 doğrulama, kural tabanlı yedek), `GeminiProvider`, migration 015 `ai_suggestions` günlüğü, `POST /api/ai/suggest`, `GET /api/admin/ai-log`, önerilen fiyatı sunucunun yazması (K7), 56 testlik `ai_test.php` | İlan Ver'de "✨ Öneri al" kutusu (kaynak, gerekçe, güven, site verisi, uyarılar, uygula butonları), yönetim panelinde yapay zekâ günlüğü kartı |

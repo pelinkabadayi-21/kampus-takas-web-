@@ -18,6 +18,8 @@ erDiagram
     USERS ||--o{ NOTIFICATIONS : "alır"
     USERS ||--o{ AUTH_TOKENS : "oturumları"
     USERS |o--o{ EXTERNAL_API_LOGS : "harici API çağrıları (H9)"
+    USERS |o--o{ AI_SUGGESTIONS : "yapay zekâ önerileri (H10)"
+    LISTINGS |o--o{ AI_SUGGESTIONS : "öneriyle açıldı (H10)"
 
     USERS {
         int id PK
@@ -95,6 +97,20 @@ erDiagram
         enum type
         varchar content
         bool is_read
+    }
+    AI_SUGGESTIONS {
+        int id PK
+        int user_id FK
+        int listing_id FK "NULL olabilir"
+        varchar source "ai/kural"
+        varchar prompt_version
+        text raw_output
+        varchar category_slug
+        decimal price
+        decimal confidence
+        varchar warnings
+        bool accepted_category
+        bool accepted_price
     }
     EXTERNAL_API_LOGS {
         int id PK

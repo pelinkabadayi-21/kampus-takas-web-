@@ -59,7 +59,14 @@
 - Fotoğraf, EXIF/GPS bilgisi silindikten **sonra** Cloudinary'ye gönderilir (KVKK). E-postalarda karşı tarafın iletişim bilgisi yoktur; kullanıcının yazdığı metinler HTML kaçışıyla eklenir.
 - Anahtar sızarsa: servisin panelinden anahtar iptal edilip yenisi üretilir, sadece Render'daki değişken değiştirilir; kodda değişiklik gerekmez.
 
-## 7. OWASP Top 10 ile eşleştirme
+## 7. Yapay zekâ bileşeni (Hafta 10)
+- **Kişisel veri modele gitmez:** Başlık ve açıklamadaki e-posta, telefon ve bağlantılar Gemini'ye ve günlüğe gitmeden önce `[e-posta]`, `[telefon]`, `[bağlantı]` olarak maskelenir. Fotoğraf 768 px'e küçültülüp yeniden çizilir; EXIF/GPS bilgisi silinir.
+- **İstem enjeksiyonu:** İlan metni istemde "yalnızca veri" olarak işaretlidir. Daha önemlisi, model ne cevap verirse versin çıktı doğrulamasından geçer: kategori listeyle sınırlıdır, fiyat 0–100.000 ₺ ve kategori medyanının ¼–4 katı arasında olmak zorundadır. Gerekçedeki HTML silinir, arayüzde de `esc()` ile yazılır.
+- **Önerilen fiyat sahteciliği:** Kullanıcı `ai_suggested_price` gönderemez (K7). İstemci sadece `ai_suggestion_id` gönderir; sunucu önerinin bu kullanıcıya ait olduğunu ve daha önce kullanılmadığını kontrol edip fiyatı kendi kaydından yazar.
+- **Kota/maliyet koruması:** Kullanıcı başına saatte 20 öneri (A6). Öneri ucu giriş gerektirir.
+- **Anahtar:** `GEMINI_API_KEY` ortam değişkenindedir, istekte adreste değil `x-goog-api-key` başlığında gider (sunucu günlüklerine düşmez).
+
+## 8. OWASP Top 10 ile eşleştirme
 
 | OWASP riski | Projedeki önlem |
 |---|---|
@@ -70,7 +77,7 @@
 | A05 Güvenlik yapılandırması | Güvenlik başlıkları, canlıda `debug` kapalı, `config.php` ve `.env` gizli, API anahtarları ortam değişkeninde (Hafta 9) |
 | A07 Kimlik doğrulama hataları | Parola kuralı, hesap kilidi, genel hata mesajı, token süresi |
 
-## 8. Bilinen sınırlar / ileride yapılacaklar
+## 9. Bilinen sınırlar / ileride yapılacaklar
 - Şu an site HTTP üzerinde çalışıyor. Yayına alınırken HTTPS açılmalı ve `cookie_secure => true` yapılmalı.
 - "Parolamı unuttum" ve e-posta ile doğrulama henüz yok; e-posta gönderimi gerektirdiği için ileride eklenebilir. Öğrenci doğrulaması şimdilik okul e-postası alan adına ve yönetici onayına dayanıyor.
 - Hesap kilidi e-posta bazlıdır. Çok sayıda farklı hesabı deneyen bir saldırgana karşı IP bazlı sınırlama da eklenebilir.

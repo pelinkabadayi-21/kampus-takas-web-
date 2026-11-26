@@ -19,15 +19,15 @@ flowchart TB
     end
 
     DB[("🗄️ MySQL<br/>kampus_takas")]
-    AI["🤖 Yapay Zekâ API<br/>(fiyat/kategori önerisi)"]
     CLD["☁️ Cloudinary<br/>görsel depolama (Hafta 9)"]
     BRV["✉️ Brevo<br/>e-posta (Hafta 9)"]
+    GEM["🤖 Google Gemini<br/>kategori/fiyat önerisi (Hafta 10)"]
 
     JS -- "HTTP / JSON<br/>GET /api/categories" --> IDX
     R --> DB
-    S -. "ileriki haftalar" .-> AI
     S -- "HttpClient<br/>imzalı yükleme" --> CLD
     S -- "HttpClient<br/>api-key başlığı" --> BRV
+    S -- "HttpClient<br/>JSON şeması + doğrulama" --> GEM
 ```
 
 ## Bir isteğin yolculuğu (örnek: kategorileri listele)
