@@ -45,7 +45,15 @@ async function apiUpload(path, formData) {
 
 // Yüklenen fotoğrafların adresi: API adresinden "/api" kısmı atılır (…/backend/public/uploads/…)
 const UPLOAD_BASE = API_BASE.replace(/\/api\/?$/, '') + '/';
-const imgUrl = path => path ? UPLOAD_BASE + path : '';
+// Hafta 9: Cloudinary'ye yüklenen fotoğrafın adresi zaten tam adrestir (https://res.cloudinary.com/…),
+// diske kaydedilenlerinki göreli yoldur (uploads/listings/…). İkisi de doğru gösterilir.
+// Genişlik (w) verilirse Cloudinary fotoğrafı o boyutta, tarayıcının desteklediği en hafif biçimde
+// (f_auto: WebP/AVIF) ve otomatik kaliteyle (q_auto) gönderir → ilan kartları çok daha hızlı açılır.
+const imgUrl = (path, w) => {
+  if (!path) return '';
+  if (/^https:\/\/res\.cloudinary\.com\//.test(path)) return w ? path.replace('/image/upload/', `/image/upload/f_auto,q_auto,c_limit,w_${w}/`) : path;
+  return /^https:\/\//.test(path) ? path : UPLOAD_BASE + path;
+};
 
 // Ortak yardımcılar
 const TYPE_LABEL = { satis: 'Satılık', takas: 'Takas', bagis: 'Bağış' };
@@ -56,7 +64,7 @@ const STATUS_LABEL = { aktif: 'Yayında', rezerve: 'Rezerve', tamamlandi: 'Tamam
 function listingCard(i, { showStatus = false } = {}) {
   return `
     <a class="listing-card" href="${PAGES_PREFIX()}ilan.html?id=${i.id}">
-      <div class="cover">${i.cover_image ? `<img src="${esc(imgUrl(i.cover_image))}" alt="" loading="lazy">` : '📦'}
+      <div class="cover">${i.cover_image ? `<img src="${esc(imgUrl(i.cover_image, 480))}" alt="" loading="lazy">` : '📦'}
         ${i.image_count > 1 ? `<span class="img-count">📷 ${i.image_count}</span>` : ''}</div>
       <div class="body">
         <span class="badge badge-${i.listing_type}">${TYPE_LABEL[i.listing_type]}</span>

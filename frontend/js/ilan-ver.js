@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     grid.innerHTML =
       existing.map((img, i) => `
         <div class="photo">
-          <img src="${esc(imgUrl(img.image_url))}" alt="">
+          <img src="${esc(imgUrl(img.image_url, 240))}" alt="">
           ${i === 0 ? '<span class="photo-cover">Kapak</span>' : `<button type="button" class="photo-btn left" data-cover="${img.id}" title="Kapak yap">★</button>`}
           <button type="button" class="photo-btn" data-del="${img.id}" title="Sil">✕</button>
         </div>`).join('') +
@@ -150,12 +150,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Fotoğrafları sırayla yükle; biri başarısız olsa da ilan kaydedilmiş olur
       const failed = [];
       // Sonra fotoğrafları tek tek yükle; yüklenemeyenleri not et
+      let backup = 0;
       for (const [i, p] of pending.entries()) {
         btn.textContent = `Fotoğraf yükleniyor ${i + 1}/${pending.length}…`;
         const fd = new FormData(); fd.append('image', p.file);
-        try { await apiUpload(`/listings/${id}/images`, fd); } catch (err) { failed.push(`${p.file.name}: ${err.message}`); }
+        try {
+          const up = await apiUpload(`/listings/${id}/images`, fd);
+          // Hafta 9: Cloudinary'ye ulaşılamadıysa fotoğraf sunucuya yedeklenir; kullanıcıya bilgi verilir
+          if (up.storage === 'yerel (yedek)') backup++;
+        } catch (err) { failed.push(`${p.file.name}: ${err.message}`); }
       }
       if (failed.length) sessionStorage.setItem('flash', 'Bazı fotoğraflar yüklenemedi — ' + failed.join(' · '));
+      else if (backup) sessionStorage.setItem('flash', `Görsel servisine şu an ulaşılamadı; ${backup} fotoğraf geçici olarak sunucuya kaydedildi.`);
       // İlan sayfasına git
       location.href = `ilan.html?id=${id}&${editId ? 'guncellendi' : 'yeni'}=1`;
     } catch (err) {

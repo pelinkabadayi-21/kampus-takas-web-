@@ -58,4 +58,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearTimeout(flash.t); flash.t = setTimeout(() => f.hidden = true, 2500);
   }
   load();
+
+  // ------------------------------------------------------------ Hafta 9: Harici servisler
+  const intBox = document.getElementById('integrations');
+  const SERVICE_LABEL = { cloudinary: '☁️ Cloudinary', brevo: '✉️ Brevo', yerel: '💾 Sunucu diski' };
+
+  // Servislerin durumunu, son 24 saatin özetini ve son çağrıları gösterir.
+  async function loadIntegrations() {
+    let d;
+    try { d = (await apiGet('/admin/integrations')).data; } catch (e) { return; }   // yönetici değilse kart gizli kalır
+    const st = d.status;
+    intBox.hidden = false;
+    intBox.innerHTML = `
+      <div class="card-head"><h2>🌐 Harici servisler</h2>
+        <span><button class="btn btn-outline" data-test="image" ${st.image_storage === 'cloudinary' ? '' : 'disabled'}>Görsel servisini dene</button>
+        <button class="btn btn-outline" data-test="email" ${st.email === 'brevo' ? '' : 'disabled'}>Bana test e-postası gönder</button></span></div>
+      <table class="facts">
+        <tr><th>Fotoğraf depolama</th><td>${st.image_storage === 'cloudinary' ? '<span class="status ok">Cloudinary açık</span>'
+          : '<span class="status">Sunucu diski</span> <small class="muted">CLOUDINARY_URL tanımlı değil</small>'}</td></tr>
+        <tr><th>E-posta bildirimi</th><td>${st.email === 'brevo' ? '<span class="status ok">Brevo açık</span>'
+          : '<span class="status">Kapalı</span> <small class="muted">BREVO_API_KEY ve MAIL_FROM tanımlı değil</small>'}</td></tr>
+      </table>
+      <h3>Son 24 saat</h3>
+      ${d.summary.length ? `<div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Servis</th><th>Çağrı</th><th>Başarılı</th><th>Başarısız</th><th>Ort. süre</th></tr></thead>
+        <tbody>${d.summary.map(s => `<tr><td>${SERVICE_LABEL[s.service] || esc(s.service)}</td><td>${s.total}</td>
+          <td>${s.ok}</td><td>${s.failed > 0 ? `<b style="color:var(--fail)">${s.failed}</b>` : 0}</td><td>${s.avg_ms} ms</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="muted">Son 24 saatte harici servise istek yapılmadı.</p>'}
+      <h3>Son çağrılar</h3>
+      ${d.recent.length ? `<div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Zaman</th><th>Servis</th><th>İşlem</th><th>Sonuç</th><th>Deneme</th><th>Süre</th><th>Hata</th></tr></thead>
+        <tbody>${d.recent.map(r => `<tr><td>${timeAgo(r.created_at)}</td><td>${SERVICE_LABEL[r.service] || esc(r.service)}</td>
+          <td>${esc(r.action)}</td><td>${r.success == 1 ? '✅ ' + (r.status_code || '') : '❌ ' + (r.status_code || '—')}</td>
+          <td>${r.attempts}</td><td>${r.duration_ms} ms</td><td style="white-space:normal">${esc(r.error || '')}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="muted">Henüz kayıt yok.</p>'}`;
+  }
+
+  // Test butonları: anahtarların doğru girildiğini canlı sitede dener
+  intBox.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-test]');
+    if (!btn) return;
+    const old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Deneniyor…';
+    try {
+      const r = await apiPost('/admin/integrations/test', { service: btn.dataset.test });
+      flash(`${r.message} (${r.duration_ms} ms)`);
+    } catch (err) {
+      flash(err.message, true);
+    }
+    btn.disabled = false; btn.textContent = old;
+    loadIntegrations();
+  });
+  loadIntegrations();
 });

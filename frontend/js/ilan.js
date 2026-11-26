@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <div class="gallery">
       <div class="detail-cover" id="main-photo">${imgs.length ? `<img src="${esc(imgUrl(imgs[0].image_url))}" alt="${esc(l.title)}">` : '📦'}</div>
       ${imgs.length > 1 ? `<div class="thumbs">${imgs.map((img, i) =>
-        `<button type="button" class="thumb ${i === 0 ? 'active' : ''}" data-src="${esc(imgUrl(img.image_url))}"><img src="${esc(imgUrl(img.image_url))}" alt=""></button>`).join('')}</div>` : ''}
+        `<button type="button" class="thumb ${i === 0 ? 'active' : ''}" data-src="${esc(imgUrl(img.image_url))}"><img src="${esc(imgUrl(img.image_url, 160))}" alt=""></button>`).join('')}</div>` : ''}
     </div>
     <div>
       <span class="badge badge-${l.listing_type}">${TYPE_LABEL[l.listing_type]}</span>

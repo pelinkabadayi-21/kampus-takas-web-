@@ -10,6 +10,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const h = await apiGet('/health');
     setStatus(apiEl, true, 'API çalışıyor');
     setStatus(dbEl, h.database.ok, h.database.ok ? 'Veritabanı bağlı' : 'Veritabanı: ' + h.database.message);
+    // Hafta 9: harici servisler. Anahtar girilmemişse hata değildir, o özellik kapalı çalışır (gri rozet).
+    if (h.integrations) {
+      const intEl = document.getElementById('int-status');
+      const cloud = h.integrations.image_storage === 'cloudinary', mail = h.integrations.email !== 'kapalı';
+      intEl.textContent = `Fotoğraflar: ${cloud ? 'Cloudinary ☁️' : 'sunucu diski'} · E-posta bildirimi: ${mail ? 'açık ✉️' : 'kapalı'}`;
+      intEl.className = 'status' + (cloud && mail ? ' ok' : '');
+      intEl.hidden = false;
+    }
     if (!h.database.ok) { latestEl.innerHTML = '<p class="muted">Veritabanı bağlı değil.</p>'; return; }
 
     // Kategorileri ve son 4 ilanı aynı anda getir

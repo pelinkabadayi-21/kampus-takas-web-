@@ -11,9 +11,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       <tr><th>E-posta</th><td>${esc(u.email)}</td></tr>
       <tr><th>Bölüm</th><td>${esc(u.department || '—')}</td></tr>
       <tr><th>Rol</th><td>${u.role === 'yonetici' ? '🛡️ Yönetici' : '🎓 Öğrenci'}</td></tr>
+      <tr><th>E-posta bildirimi</th><td>
+        <label><input type="checkbox" id="email-pref" ${u.email_notifications == 0 ? '' : 'checked'}>
+          Yeni teklif, teklif kabulü ve takas iptalini e-postayla da gönder</label>
+        <small class="muted" id="email-pref-msg"></small></td></tr>
     </table>
     <button class="btn btn-outline" id="logout-btn">Çıkış yap</button>`;
   document.getElementById('logout-btn').addEventListener('click', logout);
+
+  // Hafta 9 – E2: E-posta bildirimini aç/kapat. Tercih sunucuda saklanır; kapalıysa e-posta hiç gönderilmez.
+  const pref = document.getElementById('email-pref');
+  const prefMsg = document.getElementById('email-pref-msg');
+  pref.addEventListener('change', async () => {
+    pref.disabled = true;
+    try {
+      await apiPut('/me/preferences', { email_notifications: pref.checked });
+      prefMsg.textContent = ' Kaydedildi ✔';
+    } catch (e) {
+      // Kaydedilemediyse kutuyu eski haline getir
+      pref.checked = !pref.checked;
+      prefMsg.textContent = ' ' + e.message;
+    }
+    pref.disabled = false;
+    setTimeout(() => prefMsg.textContent = '', 2500);
+  });
 
   // Aldığım değerlendirmeler
   try {
