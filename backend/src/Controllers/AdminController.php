@@ -15,6 +15,7 @@ class AdminController
         Auth::requireRole('yonetici');
         Response::json(['success' => true, 'data' => [
             'status'  => $this->integrations->status(),        // anahtarların kendisi ASLA gönderilmez
+            'keys'    => $this->integrations->keyFingerprints(), // sadece uzunluk ve son 4 karakter (Hafta 10)
             'summary' => $this->logs->summary(24),
             'recent'  => $this->logs->recent(20),
         ]]);

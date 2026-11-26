@@ -32,11 +32,26 @@ class Env
         }
     }
 
-    /** Ortam değişkenini okur; tanımlı değilse veya boşsa varsayılanı döndürür. */
+    /**
+     * Ortam değişkenini okur; tanımlı değilse veya boşsa varsayılanı döndürür.
+     * Baştaki/sondaki boşluk ve satır sonları silinir: panele (ör. Render) yapıştırırken
+     * görünmeyen bir satır sonu eklenirse anahtar "geçersiz" sayılmasın (Hafta 10'da yaşandı).
+     */
     public static function get(string $key, string $default = ''): string
     {
         $v = getenv($key);
-        if ($v === false || $v === '') $v = $_ENV[$key] ?? '';
-        return $v === '' ? $default : (string) $v;
+        if ($v === false || trim($v) === '') $v = $_ENV[$key] ?? '';
+        $v = trim((string) $v);
+        return $v === '' ? $default : $v;
+    }
+
+    /**
+     * Anahtarı GÖSTERMEDEN hangi anahtarın yüklendiğini kontrol etmeye yarar: "41 karakter, …bQQs".
+     * Yönetim panelinde, sunucudaki anahtarın bilgisayardakiyle aynı olup olmadığını görmek için.
+     */
+    public static function fingerprint(string $secret): string
+    {
+        $secret = trim($secret);
+        return $secret === '' ? 'tanımlı değil' : mb_strlen($secret) . ' karakter, …' . mb_substr($secret, -4);
     }
 }

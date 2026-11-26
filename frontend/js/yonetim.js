@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           : '<span class="status">Sunucu diski</span> <small class="muted">CLOUDINARY_URL tanımlı değil</small>'}</td></tr>
         <tr><th>E-posta bildirimi</th><td>${st.email === 'brevo' ? '<span class="status ok">Brevo açık</span>'
           : '<span class="status">Kapalı</span> <small class="muted">BREVO_API_KEY ve MAIL_FROM tanımlı değil</small>'}</td></tr>
+        <tr><th>Anahtar parmak izi</th><td><small class="muted">${Object.entries(d.keys || {}).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join('<br>')}</small></td></tr>
       </table>
       <h3>Son 24 saat</h3>
       ${d.summary.length ? `<div class="table-wrap"><table class="data-table">

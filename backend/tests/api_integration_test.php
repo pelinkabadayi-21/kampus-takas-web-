@@ -227,6 +227,10 @@ putenv('KT_TEST_C=sunucudan');
 Env::load($envFile);
 $check('.env dosyası okundu (açıklama atlandı, tırnaklar temizlendi)', Env::get('KT_TEST_A') === 'birinci' && Env::get('KT_TEST_B') === 'tırnaklı değer' && Env::get('kucuk_harf') === '');
 $check('Sunucuda tanımlı değişken .env dosyasıyla EZİLMEDİ', Env::get('KT_TEST_C') === 'sunucudan');
+putenv("KT_TEST_D=  anahtar123\n");
+$check('Sunucudan gelen değerdeki boşluk ve satır sonu silindi', Env::get('KT_TEST_D') === 'anahtar123');
+$check('Anahtar parmak izi anahtarı göstermiyor (uzunluk + son 4)', Env::fingerprint('GIZLI-ANAHTAR-1234') === '18 karakter, …1234');
+putenv('KT_TEST_D');
 unlink($envFile); putenv('KT_TEST_A'); putenv('KT_TEST_B'); putenv('KT_TEST_C');
 
 $getPdo = fn() => $pdo;

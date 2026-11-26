@@ -72,6 +72,16 @@ class Integrations
         ];
     }
 
+    /** Yönetim paneli için anahtar parmak izleri (anahtarın kendisi değil): uzunluk ve son 4 karakter. */
+    public function keyFingerprints(): array
+    {
+        return [
+            'CLOUDINARY_URL' => Env::fingerprint((string) ($this->cfg['cloudinary_url'] ?? '')),
+            'BREVO_API_KEY'  => Env::fingerprint((string) ($this->cfg['brevo_api_key'] ?? '')),
+            'GEMINI_API_KEY' => Env::fingerprint((string) ($this->cfg['gemini_api_key'] ?? '')),
+        ];
+    }
+
     public function siteUrl(): string { return (string) ($this->cfg['site_url'] ?? ''); }
 
     /** Günlüğe yazan HTTP istemcisi oluşturur. */
