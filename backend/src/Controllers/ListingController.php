@@ -69,7 +69,8 @@ class ListingController
         }
         // Fotoğrafı kontrol et, kaydet ve bilgisini döndür
         $img = $this->images->upload($id, $_FILES['image'], $this->service, $user);
-        Response::json(['success' => true, 'data' => $img], 201);
+        // storage: fotoğraf nereye kaydedildi ("cloudinary", "yerel" veya Cloudinary'ye ulaşılamadıysa "yerel (yedek)")
+        Response::json(['success' => true, 'data' => $img, 'storage' => $this->images->lastStorage], 201);
     }
 
     // DELETE /api/listings/{id}/images/{imageId}

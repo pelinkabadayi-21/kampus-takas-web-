@@ -9,6 +9,13 @@
  *  - Fotoğraf GD ile YENİDEN ÇİZİLİR: içine gizlenmiş kod temizlenir ve EXIF bilgisi
  *    (telefonun kaydettiği GPS konumu dahil) silinir -> KVKK açısından önemli
  *  - Büyük fotoğraflar en fazla 1600 px'e küçültülür (sayfa hızlı açılsın)
+ *
+ * Hafta 9 – Harici görsel depolama:
+ *  - Fotoğraf hazırlandıktan sonra (EXIF silindikten SONRA) depolamaya gönderilir. Böylece
+ *    harici servise konum bilgisi içeren ham fotoğraf hiç gitmez.
+ *  - Cloudinary ayarlıysa fotoğraf oraya yüklenir; ayarlı değilse diske kaydedilir.
+ *  - Cloudinary'ye ulaşılamazsa (zaman aşımı, 5xx, hız sınırı) fotoğraf KAYBOLMAZ: yedek olarak
+ *    diske kaydedilir ve olay günlüğe yazılır. Kullanıcı hata görmez.
  */
 class ImageService
 {
@@ -17,12 +24,29 @@ class ImageService
     private const MAX_SIDE  = 1600;
     private const ALLOWED   = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
 
-    /** İlan deposu, fotoğrafların kaydedileceği klasör ve adres öneki alınır. */
+    private LocalImageStorage $local;
+
+    /** Son yüklemede hangi depolamanın kullanıldığı (yanıtta gösterilir): "cloudinary", "yerel" veya "yerel (yedek)" */
+    public string $lastStorage = 'yerel';
+
+    /**
+     * İlan deposu, yerel yükleme klasörü, adres öneki ve (varsa) harici depolama alınır.
+     * $remote null ise sadece disk kullanılır (XAMPP'te anahtar girilmemişse).
+     */
     public function __construct(
         private ListingRepository $listings,
-        private string $uploadDir,          // .../backend/public/uploads/listings
-        private string $urlPrefix = 'uploads/listings/'
-    ) {}
+        string $uploadDir,                                  // .../backend/public/uploads/listings
+        string $urlPrefix = 'uploads/listings/',
+        private ?ImageStorage $remote = null
+    ) {
+        $this->local = new LocalImageStorage($uploadDir, $urlPrefix);
+    }
+
+    /** Fotoğraflar şu an nereye kaydediliyor? (sağlık ekranı için) */
+    public function storageName(): string
+    {
+        return $this->remote?->name() ?? $this->local->name();
+    }
 
     /**
      * $file: $_FILES['image'] dizisi (name, type, tmp_name, error, size)
@@ -56,27 +80,50 @@ class ImageService
         if (!$info || $info[0] < 50 || $info[1] < 50) throw new ValidationException('Geçerli bir fotoğraf değil');
         if ($info[0] * $info[1] > 40_000_000) throw new ValidationException('Fotoğraf çözünürlüğü çok yüksek');
 
-        // Yükleme klasörü yoksa oluştur
-        if (!is_dir($this->uploadDir) && !mkdir($this->uploadDir, 0755, true)) {
-            throw new RuntimeException('Yükleme klasörü oluşturulamadı: ' . $this->uploadDir);
-        }
-
         // Tahmin edilemeyen rastgele dosya adı üret
         $name = bin2hex(random_bytes(16));
-        // GD varsa resmi yeniden çiz: EXIF/GPS konum bilgisi silinir
-        if (extension_loaded('gd')) {
-            $name .= '.jpg';
-            $this->reencode($tmp, $mime, $this->uploadDir . '/' . $name);
-        } else {
-            // GD yoksa (nadir) dosya olduğu gibi saklanır; tür yine içerikten belirlendi
-            $name .= '.' . self::ALLOWED[$mime];
-            $ok = is_uploaded_file($tmp) ? move_uploaded_file($tmp, $this->uploadDir . '/' . $name) : copy($tmp, $this->uploadDir . '/' . $name);
-            if (!$ok) throw new RuntimeException('Fotoğraf kaydedilemedi');
+        $userId = isset($actor['id']) ? (int) $actor['id'] : null;
+        // GD varsa resmi geçici bir dosyaya yeniden çiz: EXIF/GPS konum bilgisi silinir
+        // GD yoksa (nadir) dosya olduğu gibi saklanır; tür yine içerikten belirlendi
+        $prepared = $tmp; $ext = self::ALLOWED[$mime];
+        try {
+            if (extension_loaded('gd')) {
+                $prepared = tempnam(sys_get_temp_dir(), 'kt_img_');
+                $ext = 'jpg';
+                $this->reencode($tmp, $mime, $prepared);
+            }
+            // Hazır fotoğrafı depolamaya gönder (Cloudinary veya disk)
+            $url = $this->store($prepared, $name, $ext, $userId);
+        } finally {
+            // Geçici dosyayı temizle
+            if ($prepared !== $tmp && is_file($prepared)) unlink($prepared);
         }
 
-        // Fotoğrafın yolunu veritabanına sıradaki numarayla kaydet
-        $id = $this->listings->addImage($listingId, $this->urlPrefix . $name, $this->listings->nextImageOrder($listingId));
+        // Fotoğrafın adresini veritabanına sıradaki numarayla kaydet
+        $id = $this->listings->addImage($listingId, $url, $this->listings->nextImageOrder($listingId));
         return $this->listings->findImage($id);
+    }
+
+    /**
+     * Fotoğrafı depolamaya kaydeder. Harici servis hata verirse diske yedekler (zarif geri çekilme).
+     * Harici servisteki hata HttpClient tarafından günlüğe zaten yazıldı.
+     */
+    private function store(string $file, string $name, string $ext, ?int $userId): string
+    {
+        if ($this->remote) {
+            try {
+                $url = $this->remote->put($file, $name, $ext, $userId);
+                $this->lastStorage = $this->remote->name();
+                return $url;
+            } catch (ExternalApiException $e) {
+                // Servise ulaşılamadı: kullanıcının fotoğrafı kaybolmasın, diske kaydet
+                error_log('Görsel servisi kullanılamadı, diske kaydediliyor: ' . $e->getMessage());
+                $this->lastStorage = 'yerel (yedek)';
+                return $this->local->put($file, $name, $ext, $userId);
+            }
+        }
+        $this->lastStorage = $this->local->name();
+        return $this->local->put($file, $name, $ext, $userId);
     }
 
     /** Fotoğrafı siler: önce yetki kontrolü, sonra veritabanı kaydı ve diskteki dosya. */
@@ -87,7 +134,7 @@ class ImageService
         if (!$img || (int) $img['listing_id'] !== $listingId) throw new ValidationException('Fotoğraf bulunamadı', [], 404);
         // Önce veritabanından, sonra diskten sil
         $this->listings->deleteImage($imageId);
-        $this->removeFile($img['image_url']);
+        $this->removeFile($img['image_url'], isset($actor['id']) ? (int) $actor['id'] : null);
     }
 
     /** Seçilen fotoğrafı kapak (ilk sıra) yapar. */
@@ -106,16 +153,17 @@ class ImageService
         foreach ($this->listings->imagesOf($listingId) as $img) $this->removeFile($img['image_url']);
     }
 
-    /** Tek bir fotoğraf dosyasını siler; sadece bizim ürettiğimiz biçimdeki dosyalara dokunur (güvenlik). */
-    private function removeFile(string $url): void
+    /**
+     * Tek bir fotoğrafı bulunduğu depolamadan siler. Sadece bize ait adreslere dokunur (güvenlik).
+     * Harici serviste silme başarısız olursa işlem durdurulmaz: veritabanı kaydı zaten silindi,
+     * buluttaki dosya "artık" kalır ve hata günlükte görünür (yönetim panelinden izlenebilir).
+     */
+    private function removeFile(string $url, ?int $userId = null): void
     {
-        // Sadece kendi klasörümüzdeki, bizim ürettiğimiz biçimdeki dosyaları sil
-        // Güvenlik: sadece kendi yükleme klasörümüzdeki dosyalar silinebilir
-        if (!str_starts_with($url, $this->urlPrefix)) return;
-        $base = basename($url);
-        // Dosya adı bizim ürettiğimiz biçimdeyse ve varsa sil
-        if (preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', $base) && is_file($this->uploadDir . '/' . $base)) {
-            unlink($this->uploadDir . '/' . $base);
+        if ($this->local->owns($url)) { $this->local->delete($url, $userId); return; }
+        if ($this->remote && $this->remote->owns($url)) {
+            try { $this->remote->delete($url, $userId); }
+            catch (ExternalApiException $e) { error_log('Buluttaki fotoğraf silinemedi: ' . $e->getMessage()); }
         }
     }
 

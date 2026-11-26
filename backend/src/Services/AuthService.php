@@ -154,6 +154,15 @@ class AuthService
         return $row;
     }
 
+    /** Hafta 9 – E2: Kullanıcının bildirim tercihlerini kaydeder (şimdilik sadece e-posta bildirimi açık/kapalı). */
+    public function updatePreferences(int $userId, array $d): array
+    {
+        if (!array_key_exists('email_notifications', $d)) throw new ValidationException('Değiştirilecek tercih yok');
+        // true/false, 1/0 veya "1"/"0" kabul edilir
+        $this->users->update($userId, ['email_notifications' => filter_var($d['email_notifications'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0]);
+        return $this->users->findById($userId);
+    }
+
     /** Çıkış: oturum anahtarını veritabanından siler, böylece tekrar kullanılamaz. */
     public function logout(?string $token): void
     {

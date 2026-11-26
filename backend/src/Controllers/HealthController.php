@@ -3,7 +3,7 @@
 class HealthController
 {
     /** Uygulama ayarları alınır (veritabanı bilgileri için). */
-    public function __construct(private array $config) {}
+    public function __construct(private array $config, private ?Integrations $integrations = null) {}
 
     /** GET /api/health - API çalışıyor mu, veritabanına bağlanılabiliyor mu bilgisini döndürür. */
     public function index(): void
@@ -27,6 +27,8 @@ class HealthController
             'app'      => $this->config['app']['name'],
             'api'      => 'çalışıyor',
             'database' => ['ok' => $dbOk, 'message' => $dbMessage],
+            // Hafta 9: hangi harici servis açık (anahtarlar gösterilmez)
+            'integrations' => $this->integrations?->status(),
             'time'     => date('c'),
         ]);
     }

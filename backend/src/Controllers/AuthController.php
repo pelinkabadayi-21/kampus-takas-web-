@@ -45,6 +45,15 @@ class AuthController
         Response::json(['success' => true, 'user' => Auth::requireUser()]);
     }
 
+    // PUT /api/me/preferences   {"email_notifications": true|false}   (Hafta 9 – E2)
+    public function preferences(): void
+    {
+        // Sadece giriş yapan kişi kendi tercihini değiştirir (kullanıcı id'si istekten değil oturumdan)
+        $me = Auth::requireUser();
+        $user = $this->auth->updatePreferences((int) $me['id'], Request::json());
+        Response::json(['success' => true, 'user' => $user]);
+    }
+
     /** Oturum anahtarını tarayıcıya güvenli çerez olarak yazar (HttpOnly: JavaScript okuyamaz, SameSite: başka sitelerden gönderilmez). */
     private function setCookie(string $value, int $expires): void
     {

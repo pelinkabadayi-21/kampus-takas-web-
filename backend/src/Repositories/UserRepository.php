@@ -3,7 +3,7 @@ class UserRepository extends BaseRepository
 {
     // password_hash bilerek listede YOK: API yanıtlarına asla parola özeti çıkmaz
     // Dışarıya gösterilecek sütunlar; password_hash bilerek yok
-    private const PUBLIC_COLS = 'id, full_name, email, student_no, department, is_verified, role, avatar_url, created_at, last_login_at';
+    private const PUBLIC_COLS = 'id, full_name, email, student_no, department, is_verified, role, avatar_url, created_at, last_login_at, email_notifications';
 
     /** Yeni kullanıcı ekler; parola password_hash ile özetlenerek kaydedilir. */
     public function create(array $d): int
@@ -63,8 +63,8 @@ class UserRepository extends BaseRepository
     /** Kullanıcının izin verilen alanlarını günceller. */
     public function update(int $id, array $d): int
     {
-        // Sadece bu 4 alan güncellenebilir (rol ve e-posta buradan değişmez)
-        return $this->updateById('users', $id, $d, ['full_name', 'department', 'avatar_url', 'is_verified']);
+        // Sadece bu alanlar güncellenebilir (rol ve e-posta buradan değişmez)
+        return $this->updateById('users', $id, $d, ['full_name', 'department', 'avatar_url', 'is_verified', 'email_notifications']);
     }
 
     /** Kullanıcının rolünü değiştirir (ogrenci / yonetici). */

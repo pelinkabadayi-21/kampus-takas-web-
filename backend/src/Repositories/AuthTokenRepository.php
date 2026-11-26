@@ -17,7 +17,7 @@ class AuthTokenRepository extends BaseRepository
     {
         // Özeti eşleşen ve süresi dolmamış oturum anahtarının kullanıcısını getir
         return $this->fetchOne(
-            'SELECT t.id AS token_id, t.expires_at, u.id, u.full_name, u.email, u.role, u.is_verified, u.department
+            'SELECT t.id AS token_id, t.expires_at, u.id, u.full_name, u.email, u.role, u.is_verified, u.department, u.email_notifications
              FROM auth_tokens t JOIN users u ON u.id = t.user_id
              WHERE t.token_hash = ? AND t.expires_at > ?', [$tokenHash, $now]);
     }
