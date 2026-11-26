@@ -222,15 +222,15 @@ ALTER TABLE listings ADD CONSTRAINT chk_listing_title_len CHECK (CHAR_LENGTH(tit
 ALTER TABLE users ADD COLUMN email_notifications TINYINT(1) NOT NULL DEFAULT 1;
 
 -- Harici API çağrılarının günlüğü (Cloudinary, Brevo).
--- API anahtarı, e-posta adresi ve e-posta içeriği bu tabloya YAZILMAZ; sadece sonuç bilgisi tutulur.
+-- API anahtarı, e-posta adresi ve e-posta içeriği bu tabloya YAZILMAZ, sadece sonuç bilgisi tutulur.
 CREATE TABLE IF NOT EXISTS external_api_logs (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   service      VARCHAR(30)       NOT NULL,              -- cloudinary, brevo
   action       VARCHAR(30)       NOT NULL,              -- upload, destroy, email
   user_id      INT UNSIGNED      NULL,                  -- işlemi yapan / e-postayı alan kullanıcı
-  status_code  SMALLINT UNSIGNED NULL,                  -- HTTP durum kodu; NULL = ağ hatası veya zaman aşımı
+  status_code  SMALLINT UNSIGNED NULL,                  -- HTTP durum kodu, NULL = ağ hatası veya zaman aşımı
   success      TINYINT(1)        NOT NULL DEFAULT 0,
-  attempts     TINYINT UNSIGNED  NOT NULL DEFAULT 1,    -- yeniden denemeler dahil; 0 = hiç gönderilmedi (E5 sınırı)
+  attempts     TINYINT UNSIGNED  NOT NULL DEFAULT 1,    -- yeniden denemeler dahil, 0 = hiç gönderilmedi (E5 sınırı)
   duration_ms  INT UNSIGNED      NOT NULL DEFAULT 0,
   error        VARCHAR(255)      NULL,
   created_at   DATETIME          NOT NULL,

@@ -150,8 +150,12 @@ Render paneli → servis → **Environment** → `CLOUDINARY_URL`, `BREVO_API_KE
   - **Brevo:** istek biçimi; anahtar ve e-posta adresinin günlüğe yazılmadığı.
   - **E-posta kuralları:** E1–E5.
   - **Ortam değişkenleri:** `.env` okuma; kaynak kodda gerçek anahtar bulunmadığı.
-- **`api_canli_test.php`:** Anahtar ve internet yoksa servisi atlayıp nedenini yazıyor. Anahtarlar girildikten sonra XAMPP'te çalıştırılacak.
-- **Regresyon:** Önceki haftaların testleri (`crud_test`, `auth_test`, `listing_test`, `offer_message_test`, `ogrenci_test`) MySQL gerektirdiği için XAMPP'te migration 014'ten sonra yeniden çalıştırılmalı. `ImageService`'in eski kullanımı (`new ImageService($repo, $klasor)`) değişmeden çalışacak şekilde yazıldı.
+- **`api_canli_test.php`:** Anahtarı olmayan servis atlanıyor ve nedeni yazılıyor. XAMPP'te gerçek Brevo sunucusuna yanlış anahtarla istek atıldı: `HTTP 401 – Key not found` döndü ve **tek denemede** bırakıldı (kalıcı hata tekrar denenmiyor). Cloudinary ve e-posta gönderimi, anahtarlar `backend/.env` dosyasına yazıldıktan sonra aynı komutla denenecek.
+- **Regresyon (XAMPP, PHP 8.2 + MariaDB, 26.11.2026):** `migrate.php --fresh --seed` ile 14 migration çalıştı ve örnek veri yüklendi. `crud_test`, `auth_test`, `listing_test`, `offer_message_test`, `ogrenci_test`, `api_integration_test` ve `api_canli_test` testlerinin hepsi geçti.
+- **Regresyon testinin bulduğu iki hata ve çözümü:**
+  1. Migration 014'teki satır sonu açıklamalarında `;` vardı. `migrate.php` dosyayı `;` işaretinden böldüğü için açıklamanın yarısını SQL sanıp hata verdi. Açıklamalardaki `;` virgülle değiştirildi.
+  2. Entegrasyon testi geçici sunucunun çıktısını `/dev/null`'a yönlendiriyordu; Windows'ta bu dosya yok. Windows'ta `NUL` kullanılacak şekilde düzeltildi.
+- **XAMPP ayarı:** `php.ini` dosyasında GD eklentisi kapalıydı (`;extension=gd`); bu yüzden `listing_test` çalışmıyordu. Fotoğrafı yeniden çizip EXIF/GPS bilgisini silmek için gereken eklenti açıldı. Eski dosyanın yedeği `C:\xampp\php\php.ini.yedek` olarak saklandı.
 
 ## Yapay zekâ kullanımı
 Yapay zekâ, ders paketinde belirtildiği gibi **API dokümantasyonunu çözümlemek ve örnek istek/yanıt incelemek** için kullanıldı:

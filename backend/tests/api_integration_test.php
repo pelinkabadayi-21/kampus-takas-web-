@@ -92,13 +92,14 @@ if (function_exists('proc_open') && function_exists('curl_init')) {
     mkdir($dir);
     file_put_contents("$dir/index.php", '<?php sleep(3); echo "{}";');
     $port = random_int(20000, 40000);
-    $proc = proc_open([PHP_BINARY, '-S', "127.0.0.1:$port", '-t', $dir], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
-    usleep(400_000);
+    $null = PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null';      // çıktıyı at (Windows'ta NUL)
+    $proc = proc_open([PHP_BINARY, '-S', "127.0.0.1:$port", '-t', $dir], [1 => ['file', $null, 'w'], 2 => ['file', $null, 'w']], $pipes);
+    usleep(800_000);
     $c = new HttpClient('yavas', 1, 1, 0);
     $t0 = microtime(true);
     $e = $apiError(fn() => $c->request('GET', "http://127.0.0.1:$port/"));
     $sure = microtime(true) - $t0;
-    proc_terminate($proc); proc_close($proc);
+    if (is_resource($proc)) { proc_terminate($proc); proc_close($proc); }
     unlink("$dir/index.php"); rmdir($dir);
     $check(sprintf('Gerçek cURL: 3 sn geç cevap veren sunucu 1 sn sonra kesildi (%.1f sn)', $sure), $e && $e->isTimeout() && $sure < 2.5);
 } else {
@@ -237,8 +238,9 @@ $check('Anahtar varsa Cloudinary ve Brevo açılıyor', $on->imageStorage() inst
 $check('Durum bilgisinde anahtarların kendisi YOK', !str_contains(json_encode($on->status()), 'xkeysib') && !str_contains(json_encode($on->status()), 'cloudinary://'));
 
 $kaynak = '';
-foreach (glob(dirname(__DIR__) . '/{src,config,public}/**/*.php', GLOB_BRACE) as $f) $kaynak .= file_get_contents($f);
-foreach (glob(dirname(__DIR__) . '/config/*.php') as $f) $kaynak .= file_get_contents($f);
+$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__) . '/src', FilesystemIterator::SKIP_DOTS));
+foreach ($it as $f) if ($f->getExtension() === 'php') $kaynak .= file_get_contents($f->getPathname());
+foreach (array_merge(glob(dirname(__DIR__) . '/config/*.php'), glob(dirname(__DIR__) . '/public/*.php')) as $f) $kaynak .= file_get_contents($f);
 $check('Kaynak kodda gerçek anahtar yok (xkeysib-…, cloudinary://…@)', !preg_match('/xkeysib-[a-z0-9]{20,}|cloudinary:\/\/\d+:[^@\s]+@/i', $kaynak));
 
 echo $fail ? "\n$fail test BAŞARISIZ\n" : "\nTüm harici API entegrasyonu testleri başarılı ✔\n";
