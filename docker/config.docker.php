@@ -30,7 +30,5 @@ return [
         'timeout' => 8,     // harici servisin cevabı için en fazla kaç saniye beklenir
         'retries' => 2,     // geçici hatada (zaman aşımı, 429, 5xx) en fazla kaç kez daha denenir
     ],
-    'ai' => [
-        'api_key' => '',
-    ],
+    // Hafta 10 – Yapay zekâ: GEMINI_API_KEY Render → Environment bölümünden okunur (yoksa kural tabanlı öneri).
 ];

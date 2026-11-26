@@ -14,3 +14,5 @@ services:
         sync: false
       - key: MAIL_FROM
         sync: false
+      - key: GEMINI_API_KEY        # Hafta 10
+        sync: false
