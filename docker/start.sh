@@ -40,7 +40,23 @@ chown www-data:www-data "$APP/backend/config/config.php" && chmod 640 "$APP/back
 # 4) Tablolar + örnek (sentetik) veri
 php "$APP/backend/database/migrate.php" --fresh --seed
 
-# 5) Web sunucusu (ön planda çalışır)
+# 5) Harici API anahtarları (Hafta 9): Render paneli → Environment bölümüne yazılır.
+#    Apache altında çalışan PHP her ortamda bu değişkenleri göremeyebileceği için tarayıcıya kapalı
+#    backend/.env dosyasına aktarılır. Anahtarlar GitHub'da veya imajın içinde DEĞİL, sadece çalışan konteynerde.
+ENV_FILE="$APP/backend/.env"
+: > "$ENV_FILE"
+for KEY in CLOUDINARY_URL BREVO_API_KEY MAIL_FROM MAIL_FROM_NAME SITE_URL; do
+  VAL=$(printenv "$KEY" || true)
+  [ -n "$VAL" ] && printf '%s=%s\n' "$KEY" "$VAL" >> "$ENV_FILE"
+done
+# SITE_URL verilmediyse Render'ın kendi adresi kullanılır (e-postadaki bağlantılar için)
+if ! grep -q '^SITE_URL=' "$ENV_FILE" && [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
+  echo "SITE_URL=${RENDER_EXTERNAL_URL}" >> "$ENV_FILE"
+fi
+chown www-data:www-data "$ENV_FILE" && chmod 640 "$ENV_FILE"
+echo "Harici servisler: $(grep -q '^CLOUDINARY_URL=' "$ENV_FILE" && echo 'Cloudinary açık' || echo 'Cloudinary kapalı (fotoğraflar diske)'), $(grep -q '^BREVO_API_KEY=' "$ENV_FILE" && echo 'e-posta açık' || echo 'e-posta kapalı')"
+
+# 6) Web sunucusu (ön planda çalışır)
 mkdir -p "$APP/backend/public/uploads/listings" && chown -R www-data:www-data "$APP/backend/public/uploads"
 echo "Kampüs Takas yayında: port ${PORT}"
 exec apache2-foreground

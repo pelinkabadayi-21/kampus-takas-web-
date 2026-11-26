@@ -6,3 +6,11 @@ services:
     plan: free
     region: frankfurt
     healthCheckPath: /backend/public/api/health
+    # Hafta 9: harici API anahtarları. "sync: false" → değer GitHub'a yazılmaz, Render panelinde girilir.
+    envVars:
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false

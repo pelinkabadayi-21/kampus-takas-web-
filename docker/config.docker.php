@@ -23,6 +23,13 @@ return [
         'lock_minutes'          => 15,
         'student_email_domains' => ['bingol.edu.tr', 'ogrenci.example.com'],
     ],
+    // Hafta 9 – Harici API'ler (Cloudinary görsel depolama, Brevo e-posta).
+    // API ANAHTARLARI BURAYA YAZILMAZ: sunucunun ortam değişkenlerinden veya backend/.env dosyasından
+    // okunur (örnek: backend/.env.example). Anahtar yoksa o özellik kapalı çalışır, site hata vermez.
+    'integrations' => [
+        'timeout' => 8,     // harici servisin cevabı için en fazla kaç saniye beklenir
+        'retries' => 2,     // geçici hatada (zaman aşımı, 429, 5xx) en fazla kaç kez daha denenir
+    ],
     'ai' => [
         'api_key' => '',
     ],
